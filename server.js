@@ -37,7 +37,9 @@ app.get("/api/bot/token", handleToken);
 
 app.use("/api", apiRouter);
 
+// ルートをホームとログインに完全切り分け
 app.get("/", (req, res) => res.render("index"));
+app.get("/login", (req, res) => res.render("login"));
 app.get("/profile", (req, res) => res.render("profile"));
 app.get("/notifications", (req, res) => res.render("notifications"));
 
