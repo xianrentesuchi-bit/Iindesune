@@ -132,13 +132,10 @@
 <body>
 <div class="auth-container">
     <div class="auth-card">
-        <div class="auth-logo">
-            <span class="material-icons">flutter_dash</span>
-        </div>
-        <h2 id="authTitle" class="auth-title">ログイン</h2>
+        <h2 id="authTitle" class="auth-title">仙人アカウントでログイン</h2>
         
         <div class="input-group">
-            <input type="text" id="authUser" class="input-field" placeholder="ユーザー名 (GAS)">
+            <input type="text" id="authUser" class="input-field" placeholder="ユーザー名 ">
             <input type="password" id="authPass" class="input-field" placeholder="パスワード">
         </div>
 
@@ -166,7 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (toggleAuth) {
         toggleAuth.addEventListener('click', () => {
             isLoginMode = !isLoginMode;
-            authTitle.innerText = isLoginMode ? 'ログイン' : 'アカウント新規登録';
+            authTitle.innerText = isLoginMode ? '仙人アカウントでログイン' : '仙人アカウントを作成';
             toggleAuth.innerText = isLoginMode ? '新規登録はこちら' : 'ログインはこちら';
             authUser.value = '';
             authPass.value = '';
