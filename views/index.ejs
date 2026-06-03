@@ -4,13 +4,52 @@
     <title>ホーム / X-Board</title>
     <%- include('partials/header') %>
     <style>
-        /* ホーム画面のレイアウト・タイムラインX風超強化 */
         main {
             border-right: 1px solid #eff3f4;
             border-left: 1px solid #eff3f4;
             min-height: 100vh;
             background-color: #ffffff;
+            display: flex;
+            flex-direction: row;
         }
+
+        .center-content {
+            flex: 1;
+            border-right: 1px solid #eff3f4;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .right-sidebar {
+            width: 290px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .hashtag-box {
+            background-color: #f7f9fa;
+            border-radius: 16px;
+            padding: 16px;
+        }
+
+        .hashtag-box h3 {
+            font-size: 18px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            color: #0f1419;
+        }
+
+        .hashtag-item {
+            padding: 8px 0;
+            cursor: pointer;
+            border-bottom: 1px solid #eff3f4;
+        }
+
+        .hashtag-item:last-child { border-bottom: none; }
+        .hashtag-item .tag-name { font-weight: 700; color: #1d9bf0; }
+        .hashtag-item .tag-count { font-size: 12px; color: #536471; }
 
         .header-title {
             position: sticky;
@@ -24,12 +63,24 @@
             color: #0f1419;
             border-bottom: 1px solid #eff3f4;
             z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
-        /* タイムラインポストのスタイリング */
+        .repost-header {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #536471;
+            padding: 4px 16px 0 52px;
+        }
+
         .tweet-item {
             display: flex;
-            padding: 12px 16px;
+            flex-direction: column;
             border-bottom: 1px solid #eff3f4;
             background-color: #ffffff;
             transition: background-color 0.2s ease;
@@ -40,10 +91,12 @@
             background-color: rgba(0, 0, 0, 0.02);
         }
 
-        .tweet-avatar-col {
-            margin-right: 12px;
+        .tweet-main-row {
+            display: flex;
+            padding: 12px 16px;
         }
 
+        .tweet-avatar-col { margin-right: 12px; }
         .tweet-avatar {
             width: 40px;
             height: 40px;
@@ -66,15 +119,8 @@
             margin-bottom: 2px;
         }
 
-        .tweet-display-name {
-            font-weight: 700;
-            color: #0f1419;
-        }
-
-        .tweet-username {
-            color: #536471;
-        }
-
+        .tweet-display-name { font-weight: 700; color: #0f1419; }
+        .tweet-username { color: #536471; }
         .tweet-text-content {
             font-size: 15px;
             line-height: 1.5;
@@ -83,7 +129,11 @@
             white-space: pre-wrap;
         }
 
-        /* 4連アクションボタンエリア */
+        .tweet-text-content a {
+            color: #1d9bf0;
+            text-decoration: none;
+        }
+
         .tweet-actions-row {
             display: flex;
             justify-content: space-between;
@@ -112,32 +162,23 @@
             transition: background-color 0.2s ease;
         }
 
-        /* 返信（青） */
         .btn-reply:hover { color: #1d9bf0; }
         .btn-reply:hover .material-icons { background-color: rgba(29, 155, 240, 0.1); }
-
-        /* リポスト（緑） */
         .btn-repost:hover { color: #00ba7c; }
         .btn-repost:hover .material-icons { background-color: rgba(0, 186, 124, 0.1); }
         .btn-repost.active { color: #00ba7c; }
-
-        /* いいね（赤） */
         .btn-like:hover { color: #f91880; }
         .btn-like:hover .material-icons { background-color: rgba(249, 24, 128, 0.1); }
         .btn-like.active { color: #f91880; }
+        .btn-view:hover { color: #1d9bf0; }
 
-        /* 共有・その他（青） */
-        .btn-share:hover { color: #1d9bf0; }
-        .btn-share:hover .material-icons { background-color: rgba(29, 155, 240, 0.1); }
-
-        /* 右下の青丸投稿ボタン */
         .fab-btn {
             position: fixed;
             bottom: 24px;
-            right: 24px;
+            right: 320px;
             width: 56px;
             height: 56px;
-            background-color: var(--twitter-blue, #1d9bf0);
+            background-color: #1d9bf0;
             color: #ffffff;
             border: none;
             border-radius: 50%;
@@ -146,108 +187,62 @@
             align-items: center;
             justify-content: center;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            transition: background-color 0.2s ease, transform 0.2s ease;
             z-index: 99;
         }
-        .fab-btn:hover {
-            background-color: #1a8cd8;
-            transform: scale(1.05);
-        }
-        .fab-btn .material-icons {
-            font-size: 24px;
-        }
 
-        /* 投稿モーダル */
         .modal-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
             background-color: rgba(0, 0, 0, 0.4);
-            display: flex;
-            align-items: flex-start;
-            justify-content: center;
-            padding-top: 50px;
-            z-index: 1000;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.2s ease;
+            display: flex; align-items: flex-start; justify-content: center;
+            padding-top: 50px; z-index: 1000;
+            opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
         }
-        .modal-overlay.active {
-            opacity: 1;
-            pointer-events: auto;
-        }
+
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
         .modal-content {
-            background-color: #ffffff;
-            width: 100%;
-            max-width: 600px;
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-            transform: translateY(-20px);
-            transition: transform 0.2s ease;
+            background-color: #ffffff; width: 100%; max-width: 600px;
+            border-radius: 16px; overflow: hidden; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
         }
-        .modal-overlay.active .modal-content {
-            transform: translateY(0);
-        }
-        .modal-header {
-            display: flex;
-            align-items: center;
-            padding: 8px 16px;
+
+        .modal-header { display: flex; align-items: center; padding: 8px 16px; border-bottom: 1px solid #eff3f4; }
+        .close-modal-btn { background: none; border: none; cursor: pointer; display: flex; align-items: center; color: #0f1419; }
+        .modal-body { padding: 16px; }
+        
+        .section-heading {
+            padding: 12px 16px;
+            font-size: 16px;
+            font-weight: 800;
             border-bottom: 1px solid #eff3f4;
-        }
-        .close-modal-btn {
-            background: none;
-            border: none;
-            padding: 8px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            background-color: #f7f9fa;
             color: #0f1419;
-            transition: background-color 0.2s ease;
-        }
-        .close-modal-btn:hover {
-            background-color: rgba(15, 20, 25, 0.1);
-        }
-        .modal-body {
-            padding: 16px;
         }
     </style>
-    <script>
-        // 厳密なログインチェック
-        (() => {
-            try {
-                const userRaw = localStorage.getItem('user');
-                if (!userRaw) {
-                    window.location.replace('/login');
-                    return;
-                }
-                const user = JSON.parse(userRaw);
-                if (!user || !user.username) {
-                    window.location.replace('/login');
-                }
-            } catch (e) {
-                window.location.replace('/login');
-            }
-        })();
-    </script>
 </head>
 <body>
 <div class="container">
     <%- include('partials/sidebar') %>
 
     <main>
-        <div id="mainSection">
-            <div class="header-title">ホーム</div>
+        <div class="center-content" id="mainSection">
+            <div class="header-title" id="pageHeader">
+                <span id="headerContext">ホーム</span>
+            </div>
             
-            <div id="timeline"></div>
+            <div id="dynamicContainer">
+                <div id="timeline"></div>
+            </div>
 
             <button id="openModalBtn" class="fab-btn" type="button">
                 <span class="material-icons">edit</span>
             </button>
+        </div>
+
+        <div class="right-sidebar">
+            <div class="hashtag-box">
+                <h3>いまどうしてる？</h3>
+                <div id="hashtagTrends"></div>
+            </div>
         </div>
     </main>
 </div>
@@ -258,6 +253,7 @@
             <button id="closeModalBtn" class="close-modal-btn" type="button">
                 <span class="material-icons">close</span>
             </button>
+            <span id="modalTitle" style="margin-left: 16px; font-weight:700;">ポストする</span>
         </div>
         <div class="modal-body">
             <div class="post-box" style="border: none; padding: 0;">
@@ -281,91 +277,171 @@ document.addEventListener("DOMContentLoaded", () => {
     const msgInput = document.getElementById("msgInput");
     const postBtn = document.getElementById("postBtn");
     const charCount = document.getElementById("charCount");
-    const timeline = document.getElementById("timeline");
+    const dynamicContainer = document.getElementById("dynamicContainer");
+    const hashtagTrends = document.getElementById("hashtagTrends");
+    const pageHeader = document.getElementById("pageHeader");
+    const headerContext = document.getElementById("headerContext");
 
-    // XSS防御用エスケープ関数
+    let currentReplyToId = null;
+    let currentActiveTag = null;
+
     function escapeHTML(str) {
         if (!str) return '';
         return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
     }
 
-    // リアクション（いいね・リポスト・返信）のハンドラ
+    // メッセージ内のハッシュタグをリンクに変換
+    function parseMessage(msg) {
+        const escaped = escapeHTML(msg);
+        return escaped.replace(/#([^\s#]+)/g, `<a href="#" onclick="filterByTag('$1'); event.stopPropagation();">#$1</a>`);
+    }
+
+    // トレンドタグの読み込み
+    async function loadTrends() {
+        try {
+            const res = await fetch('/api/hashtags/trends');
+            const trends = await res.json();
+            hashtagTrends.innerHTML = trends.map(t => `
+                <div class="hashtag-item" onclick="filterByTag('${t.tag}')">
+                    <div class="tag-name">#${escapeHTML(t.tag)}</div>
+                    <div class="tag-count">${t.count} 件のポスト</div>
+                </div>
+            `).join('');
+        } catch(e) { console.error(e); }
+    }
+
+    window.filterByTag = function(tag) {
+        currentActiveTag = tag;
+        headerContext.innerHTML = `<span class="material-icons" style="cursor:pointer;" onclick="resetToHome()">arrow_back</span> #${escapeHTML(tag)}`;
+        loadTweets(tag);
+    };
+
+    window.resetToHome = function() {
+        currentActiveTag = null;
+        headerContext.textContent = "ホーム";
+        loadTweets();
+    };
+
+    // リアクション操作（いいね・リポスト・返信）
     window.handleReaction = async function(tweetId, type, element) {
         let user = {};
         try { user = JSON.parse(localStorage.getItem('user')) || {}; } catch(e) { return; }
-        
-        // モック用の簡易ローカルカウンターインクリメント（本番API接続時に拡張可能）
-        const countSpan = element.querySelector('.count-val');
-        let currentCount = parseInt(countSpan.textContent) || 0;
-        
-        if (element.classList.contains('active')) {
-            element.classList.remove('active');
-            currentCount = Math.max(0, currentCount - 1);
-        } else {
-            element.classList.add('active');
-            currentCount += 1;
-        }
-        countSpan.textContent = currentCount;
 
-        // 返信ボタンが押された場合は、投稿エリアへフォーカスを当てて簡易案内
         if (type === 'reply') {
-            openModalBtn.click();
-            msgInput.value = `@${element.getAttribute('data-user')} `;
-            msgInput.dispatchEvent(new Event('input'));
+            currentReplyToId = tweetId;
+            document.getElementById("modalTitle").textContent = "返信を投稿";
+            msgInput.placeholder = "返信をポスト";
+            postModal.classList.add("active");
+            setTimeout(() => msgInput.focus(), 50);
+            return;
         }
+
+        try {
+            const res = await fetch(`/api/tweets/${tweetId}/${type}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: user.username, display_name: user.display_name || user.username })
+            });
+            const data = await res.json();
+            if (data.success) {
+                const countSpan = element.querySelector('.count-val');
+                let count = parseInt(countSpan.textContent) || 0;
+                if (data.action.includes('un')) {
+                    element.classList.remove('active');
+                    countSpan.textContent = Math.max(0, count - 1);
+                } else {
+                    element.classList.add('active');
+                    countSpan.textContent = count + 1;
+                }
+                loadTrends();
+            }
+        } catch(e) { console.error(e); }
     };
 
-    // タイムライン描画のオーバーライドとX風UIの構築
-    window.loadTweets = async function() {
-        if (!timeline) return;
-        try {
-            const res = await fetch('/api/tweets');
-            const tweets = await res.json();
-            
-            timeline.innerHTML = tweets.map(t => {
-                const avatar = t.avatar_url || 'https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png';
-                return `
-                    <div class="tweet-item">
-                        <div class="tweet-avatar-col">
-                            <img class="tweet-avatar" src="${avatar}" alt="avatar">
+    // ポストアイテムのHTML構造生成 (共通化)
+    function createTweetCard(t) {
+        const avatar = t.avatar_url || 'https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png';
+        const isRepost = t.reposted_by ? true : false;
+        
+        return `
+            <div class="tweet-item" onclick="openOnePost(${t.is_repost_of || t.id})">
+                ${isRepost ? `<div class="repost-header"><span class="material-icons" style="font-size:16px;">autorenew</span>${escapeHTML(t.reposted_by)} さんがリポストしました</div>` : ''}
+                <div class="tweet-main-row">
+                    <div class="tweet-avatar-col">
+                        <img class="tweet-avatar" src="${avatar}" alt="avatar">
+                    </div>
+                    <div class="tweet-body-col">
+                        <div class="tweet-info-header">
+                            <span class="tweet-display-name">${escapeHTML(t.display_name)}</span>
+                            <span class="tweet-username">@${escapeHTML(t.username)}</span>
                         </div>
-                        <div class="tweet-body-col">
-                            <div class="tweet-info-header">
-                                <span class="tweet-display-name">${escapeHTML(t.display_name)}</span>
-                                <span class="tweet-username">@${escapeHTML(t.username)}</span>
-                            </div>
-                            <div class="tweet-text-content">${escapeHTML(t.message)}</div>
-                            
-                            <div class="tweet-actions-row">
-                                <button class="action-btn-wrapper btn-reply" data-user="${escapeHTML(t.username)}" onclick="handleReaction(${t.id}, 'reply', this); event.stopPropagation();">
-                                    <span class="material-icons">chat_bubble_outline</span>
-                                    <span class="count-val">${t.reply_count || 0}</span>
-                                </button>
-                                <button class="action-btn-wrapper btn-repost" onclick="handleReaction(${t.id}, 'repost', this); event.stopPropagation();">
-                                    <span class="material-icons">autorenew</span>
-                                    <span class="count-val">${t.repost_count || 0}</span>
-                                </button>
-                                <button class="action-btn-wrapper btn-like" onclick="handleReaction(${t.id}, 'like', this); event.stopPropagation();">
-                                    <span class="material-icons">favorite_border</span>
-                                    <span class="count-val">${t.like_count || 0}</span>
-                                </button>
-                                <button class="action-btn-wrapper btn-share" onclick="event.stopPropagation();">
-                                    <span class="material-icons">ios_share</span>
-                                </button>
-                            </div>
+                        <div class="tweet-text-content">${parseMessage(t.message)}</div>
+                        
+                        <div class="tweet-actions-row">
+                            <button class="action-btn-wrapper btn-reply" onclick="handleReaction(${t.id}, 'reply', this); event.stopPropagation();">
+                                <span class="material-icons">chat_bubble_outline</span>
+                                <span class="count-val">${t.reply_count || 0}</span>
+                            </button>
+                            <button class="action-btn-wrapper btn-repost" onclick="handleReaction(${t.id}, 'repost', this); event.stopPropagation();">
+                                <span class="material-icons">autorenew</span>
+                                <span class="count-val">${t.repost_count || 0}</span>
+                            </button>
+                            <button class="action-btn-wrapper btn-like" onclick="handleReaction(${t.id}, 'like', this); event.stopPropagation();">
+                                <span class="material-icons">favorite_border</span>
+                                <span class="count-val">${t.like_count || 0}</span>
+                            </button>
+                            <button class="action-btn-wrapper btn-view" onclick="event.stopPropagation();">
+                                <span class="material-icons">bar_chart</span>
+                                <span class="count-val">${t.views_count || 0}</span>
+                            </button>
                         </div>
                     </div>
-                `;
-            }).join('');
-        } catch (err) {
-            console.error("タイムラインの読み込みに失敗しました:", err);
-        }
+                </div>
+            </div>
+        `;
+    }
+
+    // タイムライン一覧読込
+    window.loadTweets = async function(tag = null) {
+        try {
+            const url = tag ? `/api/tweets?tag=${encodeURIComponent(tag)}` : '/api/tweets';
+            const res = await fetch(url);
+            const tweets = await res.json();
+            dynamicContainer.innerHTML = `<div id="timeline">${tweets.map(t => createTweetCard(t)).join('')}</div>`;
+        } catch (err) { console.error(err); }
     };
 
-    // 初回読み込みのトリガー
-    window.loadTweets();
+    // onepost.html 相当の個別投稿・返信・関連Word投稿表示機能
+    window.openOnePost = async function(tweetId) {
+        try {
+            // 表示回数のカウントアップ
+            await fetch(`/api/tweets/${tweetId}/view`, { method: 'POST' });
 
-    // 各環境（Windows/Android等）でのイベント発火タイミングを完全補正する文字数カウンター
+            const res = await fetch(`/api/tweets/${tweetId}`);
+            const data = await res.json();
+            
+            headerContext.innerHTML = `<span class="material-icons" style="cursor:pointer;" onclick="resetToHome()">arrow_back</span> ポスト`;
+
+            let html = `
+                <div style="border-bottom: 2px solid #eff3f4;">
+                    ${createTweetCard(data.tweet)}
+                </div>
+                
+                <div class="section-heading">返信</div>
+                <div id="repliesList">
+                    ${data.replies.length === 0 ? '<div style="padding:16px; color:#536471; font-size:14px;">返信はまだありません</div>' : data.replies.map(r => createTweetCard(r)).join('')}
+                </div>
+
+                <div class="section-heading">関連投稿</div>
+                <div id="relatedList">
+                    ${data.related.length === 0 ? '<div style="padding:16px; color:#536471; font-size:14px;">関連する投稿が見つかりません</div>' : data.related.map(r => createTweetCard(r)).join('')}
+                </div>
+            `;
+            dynamicContainer.innerHTML = html;
+        } catch(e) { console.error(e); }
+    };
+
+    // 入力監視
     if (msgInput && postBtn && charCount) {
         const updateInputState = () => {
             const len = msgInput.value.length;
@@ -373,31 +449,23 @@ document.addEventListener("DOMContentLoaded", () => {
             postBtn.disabled = (len === 0 || len > 140);
         };
         msgInput.addEventListener("input", updateInputState);
-        msgInput.addEventListener("propertychange", updateInputState);
     }
 
-    if (openModalBtn && postModal) {
+    if (openModalBtn) {
         openModalBtn.addEventListener("click", () => {
+            currentReplyToId = null;
+            document.getElementById("modalTitle").textContent = "ポストする";
+            msgInput.placeholder = "いまどうしてる？";
             postModal.classList.add("active");
             setTimeout(() => msgInput.focus(), 50);
         });
     }
 
-    if (closeModalBtn && postModal) {
-        closeModalBtn.addEventListener("click", () => {
-            postModal.classList.remove("active");
-        });
+    if (closeModalBtn) {
+        closeModalBtn.addEventListener("click", () => { postModal.classList.remove("active"); });
     }
 
-    if (postModal) {
-        postModal.addEventListener("click", (e) => {
-            if (e.target === postModal) {
-                postModal.classList.remove("active");
-            }
-        });
-    }
-
-    // Windows/Android等でのクロスプラットフォームセーフな投稿制御
+    // 投稿送信処理
     if (postBtn) {
         postBtn.addEventListener("click", async (e) => {
             e.preventDefault();
@@ -405,12 +473,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (!message) return;
 
             let user = {};
-            try {
-                user = JSON.parse(localStorage.getItem('user')) || {};
-            } catch(err) {
-                window.location.href = '/login';
-                return;
-            }
+            try { user = JSON.parse(localStorage.getItem('user')) || {}; } catch(err) { return; }
 
             postBtn.disabled = true;
 
@@ -422,18 +485,22 @@ document.addEventListener("DOMContentLoaded", () => {
                         display_name: user.display_name || user.username,
                         username: user.username,
                         message: message,
-                        avatar_url: user.avatar_url || ''
+                        avatar_url: user.avatar_url || '',
+                        reply_to_id: currentReplyToId
                     })
                 });
                 const data = await res.json();
                 if (data.success) {
                     msgInput.value = "";
-                    if (charCount) charCount.textContent = "0 / 140";
                     postModal.classList.remove("active");
-                    window.loadTweets();
-                } else {
-                    alert('投稿に失敗しました。');
-                    postBtn.disabled = false;
+                    if (currentReplyToId) {
+                        openOnePost(currentReplyToId);
+                    } else if (currentActiveTag) {
+                        filterByTag(currentActiveTag);
+                    } else {
+                        resetToHome();
+                    }
+                    loadTrends();
                 }
             } catch(err) {
                 alert('通信エラーが発生しました。');
@@ -441,6 +508,10 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
+
+    // 初期化処理
+    loadTweets();
+    loadTrends();
 });
 </script>
 <script src="/js/app.js"></script>
