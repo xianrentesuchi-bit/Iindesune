@@ -1,6 +1,6 @@
 <nav id="sidebar">
     <div class="sidebar-top">
-        <button class="menu-toggle-btn" id="sidebarToggle" type="button" onclick="toggleSidebarSize()">
+        <button class="menu-toggle-btn" id="sidebarToggle" type="button">
             <span class="material-icons">menu</span>
         </button>
         
@@ -184,11 +184,6 @@
 </style>
 
 <script>
-function toggleSidebarSize() {
-    const sidebar = document.getElementById("sidebar");
-    sidebar.classList.toggle("collapsed");
-}
-
 document.addEventListener("DOMContentLoaded", () => {
     const userJson = localStorage.getItem("user") || sessionStorage.getItem("user");
     if (userJson) {
