@@ -1,23 +1,187 @@
 <nav id="sidebar">
-    <button class="menu-toggle-btn" id="sidebarToggle" type="button">
-        <span class="material-icons">menu</span>
-    </button>
+    <div class="sidebar-top">
+        <button class="menu-toggle-btn" id="sidebarToggle" type="button">
+            <span class="material-icons">menu</span>
+        </button>
+        
+        <a href="/" class="nav-item">
+            <span class="material-icons">home</span>
+            <span class="nav-text">ホーム</span>
+        </a>
+        <a href="/notifications" class="nav-item">
+            <span class="material-icons">notifications</span>
+            <span class="nav-text">通知</span>
+        </a>
+        <a href="/profile" class="nav-item">
+            <span class="material-icons">person</span>
+            <span class="nav-text">プロフィール</span>
+        </a>
+    </div>
     
-    <a href="/">
-        <span class="material-icons">home</span>
-        <span class="nav-text">ホーム</span>
-    </a>
-    <a href="/notifications">
-        <span class="material-icons">notifications</span>
-        <span class="nav-text">通知</span>
-    </a>
-    <a href="/profile">
-        <span class="material-icons">person</span>
-        <span class="nav-text">プロフィール</span>
-    </a>
-    
-    <button id="logoutBtn" class="tweet-btn hidden" type="button">
-        <span class="material-icons">logout</span>
-        <span class="nav-text">ログアウト</span>
-    </button>
+    <div id="sidebarAccountInfo" class="sidebar-account hidden">
+        <img id="sidebarAvatar" src="" alt="Avatar" class="account-avatar">
+        <div class="account-details">
+            <div id="sidebarDisplayName" class="account-display-name"></div>
+            <div id="sidebarUsername" class="account-username"></div>
+        </div>
+    </div>
 </nav>
+
+<style>
+#sidebar {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100vh;
+    padding: 12px;
+    box-sizing: border-box;
+    border-right: 1px solid #eff3f4;
+    background-color: #ffffff;
+    width: 250px;
+    transition: width 0.2s ease;
+}
+
+.sidebar-top {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.menu-toggle-btn {
+    background: none;
+    border: none;
+    padding: 12px;
+    border-radius: 9999px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
+    color: #0f1419;
+    transition: background-color 0.2s ease;
+}
+
+.menu-toggle-btn:hover {
+    background-color: #e7e7e8;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 20px 12px 12px;
+    border-radius: 9999px;
+    color: #0f1419;
+    text-decoration: none;
+    font-size: 19px;
+    font-weight: 400;
+    width: fit-content;
+    transition: background-color 0.2s ease, font-weight 0.2s ease;
+}
+
+.nav-item:hover {
+    background-color: #e7e7e8;
+    font-weight: 700;
+}
+
+.nav-item .material-icons {
+    font-size: 26px;
+}
+
+.sidebar-account {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 9999px;
+    cursor: pointer;
+    margin-top: auto;
+    transition: background-color 0.2s ease;
+}
+
+.sidebar-account:hover {
+    background-color: #e7e7e8;
+}
+
+.account-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    background-color: #cfd9de;
+}
+
+.account-details {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    line-height: 1.4;
+}
+
+.account-display-name {
+    font-weight: 700;
+    font-size: 15px;
+    color: #0f1419;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.account-username {
+    font-size: 15px;
+    color: #536471;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.hidden {
+    display: none !important;
+}
+
+@media (max-width: 1280px) {
+    #sidebar {
+        width: 68px;
+        align-items: center;
+        padding: 12px 4px;
+    }
+    .nav-text {
+        display: none;
+    }
+    .nav-item {
+        padding: 12px;
+        width: 48px;
+        height: 48px;
+        justify-content: center;
+        box-sizing: border-box;
+    }
+    .sidebar-account {
+        display: none !important;
+    }
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const userJson = localStorage.getItem("user") || sessionStorage.getItem("user");
+    if (userJson) {
+        try {
+            const user = JSON.parse(userJson);
+            if (user && user.username) {
+                const accountBox = document.getElementById("sidebarAccountInfo");
+                const avatarImg = document.getElementById("sidebarAvatar");
+                const displayNameEl = document.getElementById("sidebarDisplayName");
+                const usernameEl = document.getElementById("sidebarUsername");
+
+                displayNameEl.textContent = user.display_name || user.username;
+                usernameEl.textContent = `@${user.username}`;
+                avatarImg.src = user.avatar_url || "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png";
+                
+                accountBox.classList.remove("hidden");
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+});
+</script>
