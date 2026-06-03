@@ -4,7 +4,7 @@ export function escapeHTML(str) {
   if (typeof str !== "string") return "";
   return str.replace(/[&<>'"]/g, (tag) => {
     const chars = {
-      &: "&amp;",
+      "&": "&amp;",
       "<": "&lt;",
       ">": "&gt;",
       "'": "&#39;",
