@@ -284,31 +284,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let currentReplyToId = null;
     let currentActiveTag = null;
-    let cachedToken = null;
-
-    async function getCsrfToken() {
-        if (cachedToken) return cachedToken;
-        try {
-            const res = await fetch('/api/csrf-token');
-            const data = await res.json();
-            cachedToken = data.csrfToken;
-            return cachedToken;
-        } catch (e) {
-            console.error(e);
-            return '';
-        }
-    }
 
     function escapeHTML(str) {
         if (!str) return '';
         return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
     }
 
+    // メッセージ内のハッシュタグをリンクに変換
     function parseMessage(msg) {
         const escaped = escapeHTML(msg);
         return escaped.replace(/#([^\s#]+)/g, `<a href="#" onclick="filterByTag('$1'); event.stopPropagation();">#$1</a>`);
     }
 
+    // トレンドタグの読み込み
     async function loadTrends() {
         try {
             const res = await fetch('/api/hashtags/trends');
@@ -334,6 +322,7 @@ document.addEventListener("DOMContentLoaded", () => {
         loadTweets();
     };
 
+    // リアクション操作（いいね・リポスト・返信）
     window.handleReaction = async function(tweetId, type, element) {
         let user = {};
         try { user = JSON.parse(localStorage.getItem('user')) || {}; } catch(e) { return; }
@@ -348,13 +337,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         try {
-            const token = await getCsrfToken();
             const res = await fetch(`/api/tweets/${tweetId}/${type}`, {
                 method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'X-CSRF-Token': token
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username: user.username, display_name: user.display_name || user.username })
             });
             const data = await res.json();
@@ -373,6 +358,7 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch(e) { console.error(e); }
     };
 
+    // ポストアイテムのHTML構造生成 (共通化)
     function createTweetCard(t) {
         const avatar = t.avatar_url || 'https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png';
         const isRepost = t.reposted_by ? true : false;
@@ -415,6 +401,7 @@ document.addEventListener("DOMContentLoaded", () => {
         `;
     }
 
+    // タイムライン一覧読込
     window.loadTweets = async function(tag = null) {
         try {
             const url = tag ? `/api/tweets?tag=${encodeURIComponent(tag)}` : '/api/tweets';
@@ -424,8 +411,10 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch (err) { console.error(err); }
     };
 
+    // onepost.html 相当の個別投稿・返信・関連Word投稿表示機能
     window.openOnePost = async function(tweetId) {
         try {
+            // 表示回数のカウントアップ
             await fetch(`/api/tweets/${tweetId}/view`, { method: 'POST' });
 
             const res = await fetch(`/api/tweets/${tweetId}`);
@@ -452,6 +441,7 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch(e) { console.error(e); }
     };
 
+    // 入力監視
     if (msgInput && postBtn && charCount) {
         const updateInputState = () => {
             const len = msgInput.value.length;
@@ -475,6 +465,7 @@ document.addEventListener("DOMContentLoaded", () => {
         closeModalBtn.addEventListener("click", () => { postModal.classList.remove("active"); });
     }
 
+    // 投稿送信処理
     if (postBtn) {
         postBtn.addEventListener("click", async (e) => {
             e.preventDefault();
@@ -487,13 +478,9 @@ document.addEventListener("DOMContentLoaded", () => {
             postBtn.disabled = true;
 
             try {
-                const token = await getCsrfToken();
                 const res = await fetch('/api/tweets', {
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'X-CSRF-Token': token
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         display_name: user.display_name || user.username,
                         username: user.username,
@@ -522,6 +509,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // 初期化処理
     loadTweets();
     loadTrends();
 });
