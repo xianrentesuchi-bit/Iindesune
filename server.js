@@ -82,13 +82,24 @@ cron.schedule('0 2 * * *', async () => {
   }
 });
 
-const httpsOptions = {
-  key: fs.readFileSync(path.join(__dirname, "certs", "server.key")),
-  cert: fs.readFileSync(path.join(__dirname, "certs", "server.crt"))
-};
-
 initDB().then(() => {
-  https.createServer(httpsOptions, app).listen(port, () => {
-    console.log(`Server: https://localhost:${port}`);
-  });
+  const keyPath = path.join(__dirname, "certs", "server.key");
+  const certPath = path.join(__dirname, "certs", "server.crt");
+
+  // `certs/server.key` と `certs/server.crt` が両方存在するか確認
+  if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
+    // ローカル環境（証明書あり）: HTTPSで起動
+    const httpsOptions = {
+      key: fs.readFileSync(keyPath),
+      cert: fs.readFileSync(certPath)
+    };
+    https.createServer(httpsOptions, app).listen(port, () => {
+      console.log(`Server: https://localhost:${port}`);
+    });
+  } else {
+    // 本番環境（証明書なし）: RenderインフラがSSL化を代行するため、HTTPで起動
+    app.listen(port, () => {
+      console.log(`Server: http://localhost:${port} (HTTP mode for production)`);
+    });
+  }
 }).catch(console.error);
