@@ -1,0 +1,25 @@
+{
+  "name": "turso-x-board",
+  "version": "1.0.0",
+  "description": "HTML, Node.js, and Turso based X-like message board with GAS authentication.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": [
+    "node",
+    "express",
+    "turso",
+    "sqlite",
+    "ejs"
+  ],
+  "author": "sennin_sugar",
+  "license": "ISC",
+  "dependencies": {
+    "@libsql/client": "^0.14.0",
+    "dotenv": "^16.4.5",
+    "ejs": "^3.1.10",
+    "express": "^4.19.2"
+  }
+}
