@@ -1,23 +1,25 @@
-<nav id="sidebar">
+<nav id="sidebar" class="collapsed">
     <div class="sidebar-top">
-        <button class="menu-toggle-btn" id="sidebarToggle" type="button">
+        <button class="menu-toggle-btn" id="sidebarToggle" type="button" onclick="toggleSidebarSize()">
             <span class="material-icons">menu</span>
         </button>
-        
+
         <a href="/" class="nav-item">
             <span class="material-icons">home</span>
             <span class="nav-text">ホーム</span>
         </a>
+
         <a href="/notifications" class="nav-item">
             <span class="material-icons">notifications</span>
             <span class="nav-text">通知</span>
         </a>
+
         <a href="/profile" class="nav-item">
             <span class="material-icons">person</span>
             <span class="nav-text">プロフィール</span>
         </a>
     </div>
-    
+
     <div id="sidebarAccountInfo" class="sidebar-account hidden">
         <img id="sidebarAvatar" src="" alt="Avatar" class="account-avatar">
         <div class="account-details">
@@ -161,34 +163,97 @@
     display: none !important;
 }
 
+/* モバイル時も開閉できるように修正 */
 @media (max-width: 1280px) {
-    #sidebar {
+    #sidebar:not(.expanded) {
         width: 68px;
         align-items: center;
         padding: 12px 4px;
     }
-    .nav-text {
+
+    #sidebar:not(.expanded) .nav-text {
         display: none;
     }
-    .nav-item {
+
+    #sidebar:not(.expanded) .nav-item {
         padding: 12px;
         width: 48px;
         height: 48px;
         justify-content: center;
         box-sizing: border-box;
     }
-    .sidebar-account {
+
+    #sidebar:not(.expanded) .sidebar-account {
         display: none !important;
+    }
+
+    #sidebar.expanded {
+        width: 250px;
+        padding: 12px;
+        align-items: stretch;
+    }
+
+    #sidebar.expanded .nav-text {
+        display: inline;
+    }
+
+    #sidebar.expanded .nav-item {
+        padding: 12px 20px 12px 12px;
+        width: fit-content;
+        height: auto;
+        justify-content: flex-start;
+    }
+
+    #sidebar.expanded .sidebar-account {
+        display: flex !important;
     }
 }
 </style>
 
 <script>
+function toggleSidebarSize() {
+    const sidebar = document.getElementById("sidebar");
+
+    if (window.innerWidth <= 1280) {
+        sidebar.classList.toggle("expanded");
+    } else {
+        sidebar.classList.toggle("collapsed");
+    }
+
+    localStorage.setItem(
+        "sidebar-collapsed",
+        window.innerWidth <= 1280
+            ? !sidebar.classList.contains("expanded")
+            : sidebar.classList.contains("collapsed")
+    );
+}
+
 document.addEventListener("DOMContentLoaded", () => {
+    const sidebar = document.getElementById("sidebar");
+    const collapsed = localStorage.getItem("sidebar-collapsed");
+
+    if (window.innerWidth <= 1280) {
+        if (collapsed === "false") {
+            sidebar.classList.add("expanded");
+            sidebar.classList.remove("collapsed");
+        } else {
+            sidebar.classList.remove("expanded");
+            sidebar.classList.add("collapsed");
+        }
+    } else {
+        if (collapsed === "false") {
+            sidebar.classList.remove("collapsed");
+        } else {
+            sidebar.classList.add("collapsed");
+        }
+    }
+
     const userJson = localStorage.getItem("user") || sessionStorage.getItem("user");
+
     if (userJson) {
         try {
             const user = JSON.parse(userJson);
+
             if (user && user.username) {
                 const accountBox = document.getElementById("sidebarAccountInfo");
                 const avatarImg = document.getElementById("sidebarAvatar");
@@ -197,8 +262,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 displayNameEl.textContent = user.display_name || user.username;
                 usernameEl.textContent = `@${user.username}`;
-                avatarImg.src = user.avatar_url || "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png";
-                
+                avatarImg.src =
+                    user.avatar_url ||
+                    "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png";
+
                 accountBox.classList.remove("hidden");
             }
         } catch (e) {
