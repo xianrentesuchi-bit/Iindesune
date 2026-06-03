@@ -1,6 +1,7 @@
-const express = require('express');
+import express from 'express';
+import { db } from './db.js';
+
 const router = express.Router();
-const { db } = require('./db');
 
 async function fetchGAS(action, params) {
   const url = new URL(process.env.GAS_WEBAPP_URL);
@@ -76,4 +77,4 @@ router.get('/notifications/:username', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;
