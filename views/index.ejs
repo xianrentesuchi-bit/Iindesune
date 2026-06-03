@@ -96,15 +96,7 @@
     <%- include('partials/sidebar') %>
 
     <main>
-        <div id="authSection" class="auth-box">
-            <h2 id="authTitle" style="margin-top:0; margin-bottom:20px;">ログイン</h2>
-            <input type="text" id="authUser" class="input-field" placeholder="ユーザー名 (GAS)">
-            <input type="password" id="authPass" class="input-field" placeholder="パスワード">
-            <button id="authSubmit" class="tweet-btn" style="width: 100%;">実行</button>
-            <p style="text-align:center; font-size:14px; color:var(--twitter-blue); cursor:pointer; margin-top:15px;" id="toggleAuth">新規登録はこちら</p>
-        </div>
-
-        <div id="mainSection" class="hidden">
+        <div id="mainSection">
             <div class="header-title">ホーム</div>
             
             <div id="timeline"></div>
@@ -167,7 +159,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (postBtn) {
-        const originalPostHandler = postBtn.onclick;
         postBtn.addEventListener("click", () => {
             setTimeout(() => {
                 if (msgInput.value === "") {
