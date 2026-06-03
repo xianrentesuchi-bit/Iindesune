@@ -1,7 +1,10 @@
 import express from 'express';
 import { db } from './db.js';
+import bcrypt from 'bcrypt';
+import csurf from 'csurf';
 
 const router = express.Router();
+const csrfProtection = csurf({ cookie: { httpOnly: true, secure: true } });
 
 async function fetchGAS(action, params) {
   const url = new URL(process.env.GAS_WEBAPP_URL);
@@ -12,6 +15,10 @@ async function fetchGAS(action, params) {
   const response = await fetch(url.toString(), { method: 'POST' });
   return await response.json();
 }
+
+router.get('/csrf-token', csrfProtection, (req, res) => {
+  res.json({ csrfToken: req.csrfToken() });
+});
 
 router.post('/auth/login', async (req, res) => {
   const { username, password } = req.body;
@@ -26,14 +33,15 @@ router.post('/auth/login', async (req, res) => {
 router.post('/auth/register', async (req, res) => {
   const { username, password } = req.body;
   try {
-    const result = await fetchGAS('register', { username, password });
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    const result = await fetchGAS('register', { username, password: hashedPassword });
     res.json(result);
   } catch (err) {
     res.status(500).json({ success: false, message: 'GAS登録エラー' });
   }
 });
 
-// ツイート一覧取得（ハッシュタグ検索対応）
 router.get('/tweets', async (req, res) => {
   const { tag } = req.query;
   try {
@@ -52,7 +60,6 @@ router.get('/tweets', async (req, res) => {
   }
 });
 
-// 単一ツイート詳細、返信、関連投稿の取得
 router.get('/tweets/:id', async (req, res) => {
   const tweetId = req.params.id;
   try {
@@ -65,13 +72,11 @@ router.get('/tweets/:id', async (req, res) => {
     }
     const mainTweet = tweetRes.rows[0];
 
-    // 返信一覧の取得
     const repliesRes = await db.execute({
       sql: 'SELECT * FROM tweets WHERE reply_to_id = ? ORDER BY id ASC',
       args: [tweetId]
     });
 
-    // 関連投稿の取得（同じ単語を含む投稿を簡易検索）
     const cleanMessage = mainTweet.message.replace(/[#@\s]/g, ' ').trim();
     const firstWord = cleanMessage.split(' ')[0] || '';
     let relatedRows = [];
@@ -93,8 +98,7 @@ router.get('/tweets/:id', async (req, res) => {
   }
 });
 
-// 新規投稿機能（通常の投稿、および返信対応）
-router.post('/tweets', async (req, res) => {
+router.post('/tweets', csrfProtection, async (req, res) => {
   const { display_name, username, message, avatar_url, reply_to_id } = req.body;
   try {
     await db.execute({
@@ -124,7 +128,6 @@ router.post('/tweets', async (req, res) => {
   }
 });
 
-// 表示回数の確実なインクリメントAPI
 router.post('/tweets/:id/view', async (req, res) => {
   try {
     await db.execute({
@@ -137,8 +140,7 @@ router.post('/tweets/:id/view', async (req, res) => {
   }
 });
 
-// いいねトグルAPI (DB永続化)
-router.post('/tweets/:id/like', async (req, res) => {
+router.post('/tweets/:id/like', csrfProtection, async (req, res) => {
   const { username } = req.body;
   const tweetId = req.params.id;
   try {
@@ -161,8 +163,7 @@ router.post('/tweets/:id/like', async (req, res) => {
   }
 });
 
-// リポスト登録・トグルAPI (DB永続化および「〇〇さんがリポストしました」レコード生成)
-router.post('/tweets/:id/repost', async (req, res) => {
+router.post('/tweets/:id/repost', csrfProtection, async (req, res) => {
   const { username, display_name } = req.body;
   const tweetId = req.params.id;
   try {
@@ -195,7 +196,6 @@ router.post('/tweets/:id/repost', async (req, res) => {
   }
 });
 
-// トレンドのハッシュタグ抽出API
 router.get('/hashtags/trends', async (req, res) => {
   try {
     const result = await db.execute("SELECT message FROM tweets WHERE message LIKE '%#%'");
