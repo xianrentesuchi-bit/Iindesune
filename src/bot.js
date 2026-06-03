@@ -5,7 +5,26 @@ const verifiedIPs = new Map();
 const blockedIPs = new Set();
 
 function getClientIP(req) {
-  return req.headers["x-forwarded-for"] || req.socket.remoteAddress || "unknown";
+  const forwarded = req.headers["x-forwarded-for"];
+
+  if (forwarded) {
+    return forwarded.split(",")[0].trim();
+  }
+
+  const ip =
+    req.socket.remoteAddress ||
+    req.connection?.remoteAddress ||
+    "unknown";
+
+  if (ip === "::1") {
+    return "127.0.0.1";
+  }
+
+  if (ip.startsWith("::ffff:")) {
+    return ip.substring(7);
+  }
+
+  return ip;
 }
 
 function blockCheckMiddleware(req, res, next) {
@@ -47,9 +66,9 @@ function accessGateMiddleware(req, res, next) {
   const path = req.path;
 
   if (
-    path === "/botcheck" || 
-    path.startsWith("/api/bot") || 
-    path.startsWith("/css/") || 
+    path === "/botcheck" ||
+    path.startsWith("/api/bot") ||
+    path.startsWith("/css/") ||
     path.startsWith("/js/") ||
     path.includes(".")
   ) {
@@ -57,13 +76,27 @@ function accessGateMiddleware(req, res, next) {
   }
 
   if (path === "/" || path === "/api/auth/login") {
-    const now = Date.now();
     const verifiedTime = verifiedIPs.get(ip);
 
-    if (!verifiedTime || now - verifiedTime > 3 * 60 * 60 * 1000) {
+    if (!verifiedTime) {
       if (path.startsWith("/api/")) {
-        return res.status(403).json({ error: "JS verification failed" });
+        return res.status(403).json({
+          error: "JS verification failed"
+        });
       }
+
+      return res.redirect("/botcheck");
+    }
+
+    if (Date.now() - verifiedTime > 3 * 60 * 60 * 1000) {
+      verifiedIPs.delete(ip);
+
+      if (path.startsWith("/api/")) {
+        return res.status(403).json({
+          error: "JS verification failed"
+        });
+      }
+
       return res.redirect("/botcheck");
     }
   }
@@ -73,28 +106,39 @@ function accessGateMiddleware(req, res, next) {
 
 function handleVerifyJS(req, res) {
   const ip = getClientIP(req);
+
   verifiedIPs.set(ip, Date.now());
-  res.json({ ok: true });
+
+  return res.json({
+    ok: true
+  });
 }
 
 function handleFingerprint(req, res) {
   const { fp } = req.body;
 
   if (!fp) {
-    return res.status(400).json({ error: "No fingerprint" });
+    return res.status(400).json({
+      error: "No fingerprint"
+    });
   }
 
-  res.json({ accepted: true });
+  res.json({
+    accepted: true
+  });
 }
 
 function handleToken(req, res) {
   const ip = getClientIP(req);
+
   const token = crypto
     .createHash("sha256")
     .update(ip + Date.now())
     .digest("hex");
 
-  res.json({ token });
+  res.json({
+    token
+  });
 }
 
 export {
