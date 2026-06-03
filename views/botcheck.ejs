@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>セキュリティチェック / X-Board</title>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+
+<style>
+body {
+  margin: 0;
+  background: #f7f9fa;
+  color: #0f1419;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.container {
+  width: 100%;
+  max-width: 450px;
+  padding: 20px;
+}
+
+.card {
+  background: #ffffff;
+  border: 1px solid #cfd9de;
+  padding: 32px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.header .shield-icon {
+  font-size: 56px;
+  color: #1d9bf0;
+  margin-bottom: 12px;
+}
+
+.header h1 {
+  font-size: 22px;
+  margin: 0 0 8px 0;
+  color: #0f1419;
+  font-weight: 800;
+}
+
+.header p {
+  font-size: 14px;
+  margin: 0;
+  color: #536471;
+}
+
+.challenge-box {
+  background: #f7f9fa;
+  border: 1px solid #eff3f4;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 24px;
+}
+
+.challenge-box.shake {
+  animation: shake 0.4s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+.challenge-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.verify-trigger {
+  width: 28px;
+  height: 28px;
+  border: 2px solid #cfd9de;
+  border-radius: 6px;
+  background: #ffffff;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+  transition: all 0.2s;
+}
+
+.verify-trigger:hover:not(:disabled) {
+  border-color: #1d9bf0;
+  background: #e8f5fe;
+}
+
+.loader {
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(29, 155, 240, 0.2);
+  border-top: 3px solid #1d9bf0;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: none;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.check-icon {
+  font-size: 28px;
+  color: #00ba7c;
+  display: none;
+}
+
+.error-icon {
+  font-size: 28px;
+  color: #f4212e;
+  display: none;
+}
+
+.status-text {
+  font-size: 15px;
+  font-weight: bold;
+  color: #0f1419;
+  user-select: none;
+}
+
+#honeypot {
+  display: none;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="card">
+    
+    <div class="header">
+      <span class="material-icons shield-icon">gpp_good</span>
+      <h1>安全な接続を確認しています</h1>
+      <p>掲示板へアクセスする前に確認が必要です。</p>
+    </div>
+
+    <div id="challengeBox" class="challenge-box">
+      <div class="challenge-left">
+        <button id="verifyTrigger" class="verify-trigger" onclick="startVerification()">
+          <span id="triggerIcon" class="material-icons" style="font-size: 20px; display: none;"></span>
+        </button>
+        <div id="loader" class="loader"></div>
+        <span id="checkIcon" class="material-icons check-icon">check_circle</span>
+        <span id="errorIcon" class="material-icons error-icon">error</span>
+        
+        <div id="status" class="status-text">私はボットではありません</div>
+      </div>
+    </div>
+
+    <input id="honeypot" type="text" name="website" autocomplete="off">
+
+  </div>
+</div>
+
+<script>
+async function verifyJS(){
+  await fetch("/api/bot/verify-js", { method: "POST" });
+}
+
+function fingerprint(){
+  const raw =
+    navigator.userAgent +
+    screen.width +
+    screen.height +
+    navigator.language +
+    navigator.platform +
+    navigator.hardwareConcurrency;
+  return btoa(raw);
+}
+
+async function sendFingerprint(){
+  await fetch("/api/bot/fingerprint", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ fp: fingerprint() })
+  });
+}
+
+async function getToken(){
+  const res = await fetch("/api/bot/token");
+  return await res.json();
+}
+
+async function startVerification() {
+  const challengeBox = document.getElementById("challengeBox");
+  challengeBox.classList.remove("shake");
+
+  document.getElementById("verifyTrigger").style.display = "none";
+  document.getElementById("loader").style.display = "block";
+  document.getElementById("status").textContent = "検証しています...";
+
+  const honeypot = document.getElementById("honeypot").value;
+  if (honeypot !== "") {
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    showError();
+    return;
+  }
+
+  try {
+    await verifyJS();
+    await sendFingerprint();
+    await getToken();
+
+    await new Promise(resolve => setTimeout(resolve, 2500));
+
+    document.getElementById("loader").style.display = "none";
+    document.getElementById("checkIcon").style.display = "block";
+    document.getElementById("status").textContent = "確認が完了しました";
+    
+    setTimeout(() => {
+      window.location.href = "/";
+    }, 500);
+
+  } catch (e) {
+    showError();
+  }
+}
+
+function showError() {
+  document.getElementById("loader").style.display = "none";
+  document.getElementById("errorIcon").style.display = "block";
+  document.getElementById("status").textContent = "認証に失敗しました";
+  document.getElementById("challengeBox").classList.add("shake");
+}
+</script>
+
+</body>
+</html>
