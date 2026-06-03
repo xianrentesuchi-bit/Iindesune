@@ -1,6 +1,6 @@
 <nav id="sidebar">
     <div class="sidebar-top">
-        <button class="menu-toggle-btn" id="sidebarToggle" type="button">
+        <button class="menu-toggle-btn" id="sidebarToggle" type="button" onclick="toggleSidebarSize()">
             <span class="material-icons">menu</span>
         </button>
         
@@ -38,7 +38,29 @@
     border-right: 1px solid #eff3f4;
     background-color: #ffffff;
     width: 250px;
-    transition: width 0.2s ease;
+    transition: width 0.2s ease, padding 0.2s ease;
+}
+
+#sidebar.collapsed {
+    width: 68px !important;
+    align-items: center;
+    padding: 12px 4px;
+}
+
+#sidebar.collapsed .nav-text {
+    display: none !important;
+}
+
+#sidebar.collapsed .nav-item {
+    padding: 12px;
+    width: 48px;
+    height: 48px;
+    justify-content: center;
+    box-sizing: border-box;
+}
+
+#sidebar.collapsed .sidebar-account {
+    display: none !important;
 }
 
 .sidebar-top {
@@ -162,6 +184,11 @@
 </style>
 
 <script>
+function toggleSidebarSize() {
+    const sidebar = document.getElementById("sidebar");
+    sidebar.classList.toggle("collapsed");
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     const userJson = localStorage.getItem("user") || sessionStorage.getItem("user");
     if (userJson) {
