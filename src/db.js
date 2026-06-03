@@ -7,6 +7,7 @@ const db = createClient({
 });
 
 async function initDB() {
+  // tweetsテーブルに各種カウントカラムを追加（既存構造を完全維持しつつ拡張）
   await db.execute(`
     CREATE TABLE IF NOT EXISTS tweets (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -14,6 +15,9 @@ async function initDB() {
       username TEXT NOT NULL,
       message TEXT NOT NULL,
       avatar_url TEXT DEFAULT '',
+      reply_count INTEGER DEFAULT 0,
+      repost_count INTEGER DEFAULT 0,
+      like_count INTEGER DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
@@ -26,6 +30,25 @@ async function initDB() {
       type TEXT NOT NULL,
       message TEXT NOT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // リアクション個別判定・多重防止用の新規テーブル群
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS tweet_likes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      tweet_id INTEGER NOT NULL,
+      username TEXT NOT NULL,
+      UNIQUE(tweet_id, username)
+    )
+  `);
+
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS tweet_reposts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      tweet_id INTEGER NOT NULL,
+      username TEXT NOT NULL,
+      UNIQUE(tweet_id, username)
     )
   `);
 }
