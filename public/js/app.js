@@ -1,11 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // 開閉サイドバーの動作
     const sidebar = document.getElementById('sidebar');
     const toggleBtn = document.getElementById('sidebarToggle');
     
-    // ローカルストレージから状態を復元
     if (localStorage.getItem('sidebar-collapsed') === 'true') {
-        sidebar.classList.add('collapsed');
+        if (sidebar) sidebar.classList.add('collapsed');
     }
 
     if (toggleBtn && sidebar) {
@@ -18,13 +16,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentUser = JSON.parse(localStorage.getItem('user'));
     const path = window.location.pathname;
 
-    // ガード処理
     if (!currentUser && path !== '/') {
         window.location.href = '/';
         return;
     }
 
-    // ログアウト処理
     const logoutBtn = document.getElementById('logoutBtn');
     if (currentUser && logoutBtn) {
         logoutBtn.classList.remove('hidden');
@@ -34,7 +30,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 1. ホーム画面の制御
     if (document.getElementById('authSection')) {
         const authSection = document.getElementById('authSection');
         const mainSection = document.getElementById('mainSection');
@@ -54,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
             toggleAuth.addEventListener('click', () => {
                 isLoginMode = !isLoginMode;
                 document.getElementById('authTitle').innerText = isLoginMode ? 'ログイン' : 'アカウント新規登録';
-                toggleAuth.innerText = isLoginMode ? '新規登録はこちら' : 'ログインはこちら';
+                toggleAuth.innerText = isLoginMode ? 'ログインはこちら' : '新規登録はこちら';
             });
         }
 
@@ -119,7 +114,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 2. プロフィール画面の制御
     if (path === '/profile') {
         const pImg = document.getElementById('profImg');
         const pDisplay = document.getElementById('profDisplay');
@@ -141,7 +135,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 3. 通知画面の制御
     if (path === '/notifications') {
         fetch(`/api/notifications/${currentUser.username}`)
             .then(res => res.json())
