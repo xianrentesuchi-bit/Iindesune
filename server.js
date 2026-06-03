@@ -12,6 +12,7 @@ import {
   handleFingerprint,
   handleToken
 } from "./src/bot.js";
+import { securityHeaders, requireLoginMiddleware } from "./src/security.js";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -26,9 +27,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
+// セキュリティおよび防御系ミドルウェアの適用
+app.use(securityHeaders);
 app.use(blockCheckMiddleware);
 app.use(rateLimitMiddleware);
 app.use(accessGateMiddleware);
+app.use(requireLoginMiddleware);
 
 app.get("/botcheck", (req, res) => res.render("botcheck"));
 app.post("/api/bot/verify-js", handleVerifyJS);
