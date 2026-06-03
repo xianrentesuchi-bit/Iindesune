@@ -4,8 +4,6 @@ import { fileURLToPath } from "url";
 import { initDB } from "./src/db.js";
 import apiRouter from "./src/routes.js";
 import "dotenv/config";
-
-// Bot対策モジュールのインポート
 import { 
   blockCheckMiddleware, 
   rateLimitMiddleware, 
@@ -28,26 +26,21 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
-// 全リクエストに対する防御壁の有効化
 app.use(blockCheckMiddleware);
 app.use(rateLimitMiddleware);
 app.use(accessGateMiddleware);
 
-// Bot対策用APIおよびルーティングのエンドポイント
 app.get("/botcheck", (req, res) => res.render("botcheck"));
 app.post("/api/bot/verify-js", handleVerifyJS);
 app.post("/api/bot/fingerprint", handleFingerprint);
 app.get("/api/bot/token", handleToken);
 
-// 既存のAPIルートの適用
 app.use("/api", apiRouter);
 
-// 画面表示用のページルーティング
 app.get("/", (req, res) => res.render("index"));
 app.get("/profile", (req, res) => res.render("profile"));
 app.get("/notifications", (req, res) => res.render("notifications"));
 
-// 404エラーハンドリング
 app.use((req, res) => {
   res.status(404).render("404");
 });
