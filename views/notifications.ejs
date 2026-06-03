@@ -3,6 +3,118 @@
 <head>
     <title>通知 / X-Board</title>
     <%- include('partials/header') %>
+    <style>
+        /* 通知画面全体のレイアウト強化 */
+        main {
+            border-right: 1px solid #eff3f4;
+            min-height: 100vh;
+            background-color: #ffffff;
+        }
+
+        .header-title {
+            position: sticky;
+            top: 0;
+            background-color: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 16px;
+            font-size: 20px;
+            font-weight: 800;
+            color: #0f1419;
+            border-bottom: 1px solid #eff3f4;
+            z-index: 10;
+        }
+
+        /* 通知カードの統合スタイリング */
+        .notification-card {
+            display: flex;
+            gap: 12px;
+            padding: 16px;
+            border-bottom: 1px solid #eff3f4;
+            background-color: #ffffff;
+            transition: background-color 0.2s ease;
+            cursor: pointer;
+        }
+
+        .notification-card:hover {
+            background-color: #f7f7f7;
+        }
+
+        /* X風の通知アイコンエリア */
+        .notification-icon-wrapper {
+            display: flex;
+            justify-content: flex-end;
+            width: 40px;
+            min-width: 40px;
+        }
+
+        .notification-icon {
+            font-size: 24px;
+            color: #1d9bf0; /* メンション用の爽やかな青 */
+        }
+
+        /* 通知コンテンツエリア */
+        .notification-content {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+        }
+
+        .notification-user-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .notification-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            background-color: #cfd9de;
+        }
+
+        .notification-text-header {
+            font-size: 15px;
+            color: #0f1419;
+            line-height: 1.4;
+        }
+
+        .notification-user-name {
+            font-weight: 700;
+        }
+
+        .notification-message-body {
+            font-size: 15px;
+            color: #536471;
+            line-height: 1.5;
+            margin-top: 4px;
+            word-break: break-word;
+        }
+
+        /* 空状態の洗練されたプレースホルダー */
+        .empty-notifications {
+            max-width: 400px;
+            margin: 40px auto;
+            padding: 0 32px;
+            text-align: left;
+        }
+
+        .empty-title {
+            font-size: 31px;
+            font-weight: 800;
+            line-height: 36px;
+            color: #0f1419;
+            margin-bottom: 8px;
+        }
+
+        .empty-desc {
+            font-size: 15px;
+            line-height: 20px;
+            color: #536471;
+        }
+    </style>
 </head>
 <body>
 <div class="container">
@@ -12,6 +124,58 @@
         <div id="notificationList"></div>
     </main>
 </div>
+
+<script>
+// app.js側の非同期描画HTML構造をこの強化UIと完全同期させるためのオーバーライド設定
+document.addEventListener("DOMContentLoaded", () => {
+    const originalFetch = window.fetch;
+    window.fetch = async function(...args) {
+        const response = await originalFetch.apply(this, args);
+        if (typeof args[0] === 'string' && args[0].startsWith('/api/notifications/')) {
+            const clone = response.clone();
+            try {
+                const notifications = await clone.json();
+                const list = document.getElementById('notificationList');
+                if (!list) return response;
+
+                if (notifications.length === 0) {
+                    list.innerHTML = `
+                        <div class="empty-notifications">
+                            <div class="empty-title">まだ通知はありません</div>
+                            <div class="empty-desc">誰かがあなたにメンションを送信したりポストに反応すると、ここに通知が表示されます。</div>
+                        </div>
+                    `;
+                    return response;
+                }
+
+                function escapeHTML(str) {
+                    return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+                }
+
+                list.innerHTML = notifications.map(n => `
+                    <div class="notification-card">
+                        <div class="notification-icon-wrapper">
+                            <span class="material-icons notification-icon">alternate_email</span>
+                        </div>
+                        <div class="notification-content">
+                            <div class="notification-user-row">
+                                <img class="notification-avatar" src="${n.from_avatar_url || 'https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png'}">
+                            </div>
+                            <div class="notification-text-header">
+                                <span class="notification-user-name">${escapeHTML(n.from_display_name)}</span> さんからメンションされました
+                            </div>
+                            <div class="notification-message-body">${escapeHTML(n.message)}</div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                console.error(e);
+            }
+        }
+        return response;
+    };
+});
+</script>
 <script src="/js/app.js"></script>
 </body>
 </html>
