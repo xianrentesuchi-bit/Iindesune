@@ -7,6 +7,7 @@ const db = createClient({
 });
 
 async function initDB() {
+  // 1. ツイート・ポスト保存用テーブル
   await db.execute(`
     CREATE TABLE IF NOT EXISTS tweets (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -18,6 +19,7 @@ async function initDB() {
     )
   `);
 
+  // 2. メンション通知保存用テーブル
   await db.execute(`
     CREATE TABLE IF NOT EXISTS notifications (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
