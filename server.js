@@ -1,30 +1,55 @@
-const express = require('express');
-const path = require('path');
-const { initDB } = require('./src/db');
-const apiRouter = require('./src/routes');
-require('dotenv').config();
+import express from "express";
+import path from "path";
+import { fileURLToPath } from "url";
+import { initDB } from "./src/db.js";
+import apiRouter from "./src/routes.js";
+import "dotenv/config";
+
+// Bot対策モジュールのインポート
+import { 
+  blockCheckMiddleware, 
+  rateLimitMiddleware, 
+  accessGateMiddleware,
+  handleVerifyJS,
+  handleFingerprint,
+  handleToken
+} from "./src/bot.js";
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static('public'));
+app.use(express.static("public"));
 
-// APIルートの適用
-app.use('/api', apiRouter);
+// 全リクエストに対する防御壁の有効化
+app.use(blockCheckMiddleware);
+app.use(rateLimitMiddleware);
+app.use(accessGateMiddleware);
+
+// Bot対策用APIおよびルーティングのエンドポイント
+app.get("/botcheck", (req, res) => res.render("botcheck"));
+app.post("/api/bot/verify-js", handleVerifyJS);
+app.post("/api/bot/fingerprint", handleFingerprint);
+app.get("/api/bot/token", handleToken);
+
+// 既存のAPIルートの適用
+app.use("/api", apiRouter);
 
 // 画面表示用のページルーティング
-app.get('/', (req, res) => res.render('index'));
-app.get('/profile', (req, res) => res.render('profile'));
-app.get('/notifications', (req, res) => res.render('notifications'));
+app.get("/", (req, res) => res.render("index"));
+app.get("/profile", (req, res) => res.render("profile"));
+app.get("/notifications", (req, res) => res.render("notifications"));
 
-// 404エラーハンドリング（リダイレクトではなく404専用EJSを表示）
+// 404エラーハンドリング
 app.use((req, res) => {
-  res.status(404).render('404');
+  res.status(404).render("404");
 });
 
 initDB().then(() => {
