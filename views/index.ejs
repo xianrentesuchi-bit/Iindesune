@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <title>ホーム / X-Board</title>
+    <%- include('partials/header') %>
+</head>
+<body>
+<div class="container">
+    <%- include('partials/sidebar') %>
+
+    <main>
+        <div id="authSection" class="auth-box">
+            <h2 id="authTitle" style="margin-top:0; margin-bottom:20px;">ログイン</h2>
+            <input type="text" id="authUser" class="input-field" placeholder="ユーザー名 (GAS)">
+            <input type="password" id="authPass" class="input-field" placeholder="パスワード">
+            <button id="authSubmit" class="tweet-btn" style="width: 100%;">実行</button>
+            <p style="text-align:center; font-size:14px; color:var(--twitter-blue); cursor:pointer; margin-top:15px;" id="toggleAuth">新規登録はこちら</p>
+        </div>
+
+        <div id="mainSection" class="hidden">
+            <div class="header-title">ホーム</div>
+            <div class="post-box">
+                <div class="post-box-right">
+                    <textarea id="msgInput" placeholder="いまどうしてる？" rows="3" maxlength="140"></textarea>
+                    <div class="form-actions">
+                        <span class="progress-container" id="charCount">0 / 140</span>
+                        <button id="postBtn" class="tweet-btn" disabled>ポストする</button>
+                    </div>
+                </div>
+            </div>
+            <div id="timeline"></div>
+        </div>
+    </main>
+</div>
+<script src="/js/app.js"></script>
+</body>
+</html>
