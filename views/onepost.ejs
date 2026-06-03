@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <title>ポスト / X-Board</title>
+    <%- include('partials/header') %>
+    <style>
+        main {
+            border-right: 1px solid #eff3f4;
+            border-left: 1px solid #eff3f4;
+            min-height: 100vh;
+            background-color: #ffffff;
+            display: flex;
+            flex-direction: row;
+        }
+
+        .center-content {
+            flex: 1;
+            border-right: 1px solid #eff3f4;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .right-sidebar {
+            width: 290px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .hashtag-box {
+            background-color: #f7f9fa;
+            border-radius: 16px;
+            padding: 16px;
+        }
+
+        .hashtag-box h3 {
+            font-size: 18px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            color: #0f1419;
+        }
+
+        .hashtag-item {
+            padding: 8px 0;
+            cursor: pointer;
+            border-bottom: 1px solid #eff3f4;
+        }
+
+        .hashtag-item:last-child { border-bottom: none; }
+        .hashtag-item .tag-name { font-weight: 700; color: #1d9bf0; }
+        .hashtag-item .tag-count { font-size: 12px; color: #536471; }
+
+        .header-title {
+            position: sticky;
+            top: 0;
+            background-color: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 16px;
+            font-size: 20px;
+            font-weight: 800;
+            color: #0f1419;
+            border-bottom: 1px solid #eff3f4;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .repost-header {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #536471;
+            padding: 4px 16px 0 52px;
+        }
+
+        .tweet-item {
+            display: flex;
+            flex-direction: column;
+            border-bottom: 1px solid #eff3f4;
+            background-color: #ffffff;
+            transition: background-color 0.2s ease;
+            cursor: pointer;
+        }
+
+        .tweet-item:hover {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+
+        .tweet-main-row {
+            display: flex;
+            padding: 12px 16px;
+        }
+
+        .tweet-avatar-col { margin-right: 12px; }
+        .tweet-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            background-color: #cfd9de;
+        }
+
+        .tweet-body-col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tweet-info-header {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 15px;
+            margin-bottom: 2px;
+        }
+
+        .tweet-display-name { font-weight: 700; color: #0f1419; }
+        .tweet-username { color: #536471; }
+        .tweet-text-content {
+            font-size: 15px;
+            line-height: 1.5;
+            color: #0f1419;
+            word-break: break-word;
+            white-space: pre-wrap;
+        }
+
+        .tweet-text-content a {
+            color: #1d9bf0;
+            text-decoration: none;
+        }
+
+        .tweet-actions-row {
+            display: flex;
+            justify-content: space-between;
+            max-width: 425px;
+            margin-top: 12px;
+            color: #536471;
+        }
+
+        .action-btn-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 13px;
+            transition: color 0.2s ease;
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            color: #536471;
+        }
+
+        .action-btn-wrapper .material-icons {
+            font-size: 18px;
+            padding: 8px;
+            border-radius: 50%;
+            transition: background-color 0.2s ease;
+        }
+
+        .btn-reply:hover { color: #1d9bf0; }
+        .btn-reply:hover .material-icons { background-color: rgba(29, 155, 240, 0.1); }
+        .btn-repost:hover { color: #00ba7c; }
+        .btn-repost:hover .material-icons { background-color: rgba(0, 186, 124, 0.1); }
+        .btn-repost.active { color: #00ba7c; }
+        .btn-like:hover { color: #f91880; }
+        .btn-like:hover .material-icons { background-color: rgba(249, 24, 128, 0.1); }
+        .btn-like.active { color: #f91880; }
+        .btn-view:hover { color: #1d9bf0; }
+
+        .fab-btn {
+            position: fixed;
+            bottom: 24px;
+            right: 320px;
+            width: 56px;
+            height: 56px;
+            background-color: #1d9bf0;
+            color: #ffffff;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 99;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            display: flex; align-items: flex-start; justify-content: center;
+            padding-top: 50px; z-index: 1000;
+            opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
+        }
+
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .modal-content {
+            background-color: #ffffff; width: 100%; max-width: 600px;
+            border-radius: 16px; overflow: hidden; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .modal-header { display: flex; align-items: center; padding: 8px 16px; border-bottom: 1px solid #eff3f4; }
+        .close-modal-btn { background: none; border: none; cursor: pointer; display: flex; align-items: center; color: #0f1419; }
+        .modal-body { padding: 16px; }
+        
+        .section-heading {
+            padding: 12px 16px;
+            font-size: 16px;
+            font-weight: 800;
+            border-bottom: 1px solid #eff3f4;
+            background-color: #f7f9fa;
+            color: #0f1419;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <%- include('partials/sidebar') %>
+
+    <main>
+        <div class="center-content" id="mainSection">
+            <div class="header-title" id="pageHeader">
+                <span class="material-icons" style="cursor:pointer;" onclick="goBackToHome()">arrow_back</span>
+                <span id="headerContext">ポスト</span>
+            </div>
+            
+            <div id="dynamicContainer">
+                <div id="onePostContent"></div>
+            </div>
+
+            <button id="openModalBtn" class="fab-btn" type="button">
+                <span class="material-icons">edit</span>
+            </button>
+        </div>
+
+        <div class="right-sidebar">
+            <div class="hashtag-box">
+                <h3>いまどうしてる？</h3>
+                <div id="hashtagTrends"></div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<div id="postModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <button id="closeModalBtn" class="close-modal-btn" type="button">
+                <span class="material-icons">close</span>
+            </button>
+            <span id="modalTitle" style="margin-left: 16px; font-weight:700;">返信を投稿</span>
+        </div>
+        <div class="modal-body">
+            <div class="post-box" style="border: none; padding: 0;">
+                <div class="post-box-right">
+                    <textarea id="msgInput" placeholder="返信をポスト" rows="4" maxlength="140" style="width: 100%; border: none; resize: none; outline: none; font-size: 19px; font-family: inherit; color: #0f1419; margin-bottom: 12px;"></textarea>
+                    <div class="form-actions" style="display: flex; justify-content: flex-end; align-items: center; gap: 12px; border-top: 1px solid #eff3f4; padding-top: 12px;">
+                        <span class="progress-container" id="charCount">0 / 140</span>
+                        <button id="postBtn" class="tweet-btn" disabled>ポストする</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const openModalBtn = document.getElementById("openModalBtn");
+    const closeModalBtn = document.getElementById("closeModalBtn");
+    const postModal = document.getElementById("postModal");
+    const msgInput = document.getElementById("msgInput");
+    const postBtn = document.getElementById("postBtn");
+    const charCount = document.getElementById("charCount");
+    const dynamicContainer = document.getElementById("dynamicContainer");
+    const hashtagTrends = document.getElementById("hashtagTrends");
+
+    // URLパス（例: /tweets/42）からTweet IDを非同期抽出
+    const pathParts = window.location.pathname.split('/');
+    const tweetId = pathParts[pathParts.length - 1];
+
+    let currentReplyToId = tweetId;
+
+    function escapeHTML(str) {
+        if (!str) return '';
+        return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+    }
+
+    function parseMessage(msg) {
+        const escaped = escapeHTML(msg);
+        return escaped.replace(/#([^\s#]+)/g, `<a href="/?tag=$1">#$1</a>`);
+    }
+
+    window.goBackToHome = function() {
+        window.location.href = '/';
+    };
+
+    async function loadTrends() {
+        try {
+            const res = await fetch('/api/hashtags/trends');
+            const trends = await res.json();
+            hashtagTrends.innerHTML = trends.map(t => `
+                <div class="hashtag-item" onclick="window.location.href='/?tag=${encodeURIComponent(t.tag)}'">
+                    <div class="tag-name">#${escapeHTML(t.tag)}</div>
+                    <div class="tag-count">${t.count} 件のポスト</div>
+                </div>
+            `).join('');
+        } catch(e) { console.error(e); }
+    }
+
+    window.handleReaction = async function(id, type, element) {
+        let user = {};
+        try { user = JSON.parse(localStorage.getItem('user')) || {}; } catch(e) { return; }
+
+        if (type === 'reply') {
+            currentReplyToId = id;
+            document.getElementById("modalTitle").textContent = "返信を投稿";
+            msgInput.placeholder = "返信をポスト";
+            postModal.classList.add("active");
+            setTimeout(() => msgInput.focus(), 50);
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/tweets/${id}/${type}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: user.username, display_name: user.display_name || user.username })
+            });
+            const data = await res.json();
+            if (data.success) {
+                const countSpan = element.querySelector('.count-val');
+                let count = parseInt(countSpan.textContent) || 0;
+                if (data.action.includes('un')) {
+                    element.classList.remove('active');
+                    countSpan.textContent = Math.max(0, count - 1);
+                } else {
+                    element.classList.add('active');
+                    countSpan.textContent = count + 1;
+                }
+                loadTrends();
+            }
+        } catch(e) { console.error(e); }
+    };
+
+    function createTweetCard(t) {
+        const avatar = t.avatar_url || 'https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png';
+        const isRepost = t.reposted_by ? true : false;
+        
+        return `
+            <div class="tweet-item" onclick="window.location.href='/tweets/${t.is_repost_of || t.id}'">
+                ${isRepost ? `<div class="repost-header"><span class="material-icons" style="font-size:16px;">autorenew</span>${escapeHTML(t.reposted_by)} さんがリポストしました</div>` : ''}
+                <div class="tweet-main-row">
+                    <div class="tweet-avatar-col">
+                        <img class="tweet-avatar" src="${avatar}" alt="avatar">
+                    </div>
+                    <div class="tweet-body-col">
+                        <div class="tweet-info-header">
+                            <span class="tweet-display-name">${escapeHTML(t.display_name)}</span>
+                            <span class="tweet-username">@${escapeHTML(t.username)}</span>
+                        </div>
+                        <div class="tweet-text-content">${parseMessage(t.message)}</div>
+                        
+                        <div class="tweet-actions-row">
+                            <button class="action-btn-wrapper btn-reply" onclick="handleReaction(${t.id}, 'reply', this); event.stopPropagation();">
+                                <span class="material-icons">chat_bubble_outline</span>
+                                <span class="count-val">${t.reply_count || 0}</span>
+                            </button>
+                            <button class="action-btn-wrapper btn-repost" onclick="handleReaction(${t.id}, 'repost', this); event.stopPropagation();">
+                                <span class="material-icons">autorenew</span>
+                                <span class="count-val">${t.repost_count || 0}</span>
+                            </button>
+                            <button class="action-btn-wrapper btn-like" onclick="handleReaction(${t.id}, 'like', this); event.stopPropagation();">
+                                <span class="material-icons">favorite_border</span>
+                                <span class="count-val">${t.like_count || 0}</span>
+                            </button>
+                            <button class="action-btn-wrapper btn-view" onclick="event.stopPropagation();">
+                                <span class="material-icons">bar_chart</span>
+                                <span class="count-val">${t.views_count || 0}</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    async function loadOnePostDetails() {
+        if (!tweetId) return;
+        try {
+            // カウントインクリメント
+            await fetch(`/api/tweets/${tweetId}/view`, { method: 'POST' });
+
+            const res = await fetch(`/api/tweets/${tweetId}`);
+            if (!res.ok) {
+                dynamicContainer.innerHTML = '<div style="padding:16px; color:#536471;">ポストが見つかりませんでした。</div>';
+                return;
+            }
+            const data = await res.json();
+
+            let html = `
+                <div style="border-bottom: 2px solid #eff3f4;">
+                    ${createTweetCard(data.tweet)}
+                </div>
+                
+                <div class="section-heading">返信</div>
+                <div id="repliesList">
+                    ${data.replies.length === 0 ? '<div style="padding:16px; color:#536471; font-size:14px;">返信はまだありません</div>' : data.replies.map(r => createTweetCard(r)).join('')}
+                </div>
+
+                <div class="section-heading">関連投稿</div>
+                <div id="relatedList">
+                    ${data.related.length === 0 ? '<div style="padding:16px; color:#536471; font-size:14px;">関連する投稿が見つかりません</div>' : data.related.map(r => createTweetCard(r)).join('')}
+                </div>
+            `;
+            dynamicContainer.innerHTML = html;
+        } catch(e) {
+            console.error(e);
+            dynamicContainer.innerHTML = '<div style="padding:16px; color:#536471;">読み込みエラーが発生しました。</div>';
+        }
+    }
+
+    if (msgInput && postBtn && charCount) {
+        const updateInputState = () => {
+            const len = msgInput.value.length;
+            charCount.textContent = `${len} / 140`;
+            postBtn.disabled = (len === 0 || len > 140);
+        };
+        msgInput.addEventListener("input", updateInputState);
+    }
+
+    if (openModalBtn) {
+        openModalBtn.addEventListener("click", () => {
+            currentReplyToId = tweetId;
+            document.getElementById("modalTitle").textContent = "返信を投稿";
+            msgInput.placeholder = "返信をポスト";
+            postModal.classList.add("active");
+            setTimeout(() => msgInput.focus(), 50);
+        });
+    }
+
+    if (closeModalBtn) {
+        closeModalBtn.addEventListener("click", () => { postModal.classList.remove("active"); });
+    }
+
+    if (postBtn) {
+        postBtn.addEventListener("click", async (e) => {
+            e.preventDefault();
+            const message = msgInput.value.trim();
+            if (!message) return;
+
+            let user = {};
+            try { user = JSON.parse(localStorage.getItem('user')) || {}; } catch(err) { return; }
+
+            postBtn.disabled = true;
+
+            try {
+                const res = await fetch('/api/tweets', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        display_name: user.display_name || user.username,
+                        username: user.username,
+                        message: message,
+                        avatar_url: user.avatar_url || '',
+                        reply_to_id: currentReplyToId
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    msgInput.value = "";
+                    postModal.classList.remove("active");
+                    loadOnePostDetails();
+                    loadTrends();
+                }
+            } catch(err) {
+                alert('通信エラーが発生しました。');
+                postBtn.disabled = false;
+            }
+        });
+    }
+
+    // 初期化
+    loadOnePostDetails();
+    loadTrends();
+});
+</script>
+<script src="/js/app.js"></script>
+</body>
+</html>
