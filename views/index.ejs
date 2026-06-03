@@ -4,6 +4,132 @@
     <title>ホーム / X-Board</title>
     <%- include('partials/header') %>
     <style>
+        /* ホーム画面のレイアウト・タイムラインX風超強化 */
+        main {
+            border-right: 1px solid #eff3f4;
+            border-left: 1px solid #eff3f4;
+            min-height: 100vh;
+            background-color: #ffffff;
+        }
+
+        .header-title {
+            position: sticky;
+            top: 0;
+            background-color: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 16px;
+            font-size: 20px;
+            font-weight: 800;
+            color: #0f1419;
+            border-bottom: 1px solid #eff3f4;
+            z-index: 10;
+        }
+
+        /* タイムラインポストのスタイリング */
+        .tweet-item {
+            display: flex;
+            padding: 12px 16px;
+            border-bottom: 1px solid #eff3f4;
+            background-color: #ffffff;
+            transition: background-color 0.2s ease;
+            cursor: pointer;
+        }
+
+        .tweet-item:hover {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+
+        .tweet-avatar-col {
+            margin-right: 12px;
+        }
+
+        .tweet-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            background-color: #cfd9de;
+        }
+
+        .tweet-body-col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tweet-info-header {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 15px;
+            margin-bottom: 2px;
+        }
+
+        .tweet-display-name {
+            font-weight: 700;
+            color: #0f1419;
+        }
+
+        .tweet-username {
+            color: #536471;
+        }
+
+        .tweet-text-content {
+            font-size: 15px;
+            line-height: 1.5;
+            color: #0f1419;
+            word-break: break-word;
+            white-space: pre-wrap;
+        }
+
+        /* 4連アクションボタンエリア */
+        .tweet-actions-row {
+            display: flex;
+            justify-content: space-between;
+            max-width: 425px;
+            margin-top: 12px;
+            color: #536471;
+        }
+
+        .action-btn-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 13px;
+            transition: color 0.2s ease;
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            color: #536471;
+        }
+
+        .action-btn-wrapper .material-icons {
+            font-size: 18px;
+            padding: 8px;
+            border-radius: 50%;
+            transition: background-color 0.2s ease;
+        }
+
+        /* 返信（青） */
+        .btn-reply:hover { color: #1d9bf0; }
+        .btn-reply:hover .material-icons { background-color: rgba(29, 155, 240, 0.1); }
+
+        /* リポスト（緑） */
+        .btn-repost:hover { color: #00ba7c; }
+        .btn-repost:hover .material-icons { background-color: rgba(0, 186, 124, 0.1); }
+        .btn-repost.active { color: #00ba7c; }
+
+        /* いいね（赤） */
+        .btn-like:hover { color: #f91880; }
+        .btn-like:hover .material-icons { background-color: rgba(249, 24, 128, 0.1); }
+        .btn-like.active { color: #f91880; }
+
+        /* 共有・その他（青） */
+        .btn-share:hover { color: #1d9bf0; }
+        .btn-share:hover .material-icons { background-color: rgba(29, 155, 240, 0.1); }
+
         /* 右下の青丸投稿ボタン */
         .fab-btn {
             position: fixed;
@@ -90,6 +216,24 @@
             padding: 16px;
         }
     </style>
+    <script>
+        // 厳密なログインチェック
+        (() => {
+            try {
+                const userRaw = localStorage.getItem('user');
+                if (!userRaw) {
+                    window.location.replace('/login');
+                    return;
+                }
+                const user = JSON.parse(userRaw);
+                if (!user || !user.username) {
+                    window.location.replace('/login');
+                }
+            } catch (e) {
+                window.location.replace('/login');
+            }
+        })();
+    </script>
 </head>
 <body>
 <div class="container">
@@ -136,6 +280,101 @@ document.addEventListener("DOMContentLoaded", () => {
     const postModal = document.getElementById("postModal");
     const msgInput = document.getElementById("msgInput");
     const postBtn = document.getElementById("postBtn");
+    const charCount = document.getElementById("charCount");
+    const timeline = document.getElementById("timeline");
+
+    // XSS防御用エスケープ関数
+    function escapeHTML(str) {
+        if (!str) return '';
+        return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+    }
+
+    // リアクション（いいね・リポスト・返信）のハンドラ
+    window.handleReaction = async function(tweetId, type, element) {
+        let user = {};
+        try { user = JSON.parse(localStorage.getItem('user')) || {}; } catch(e) { return; }
+        
+        // モック用の簡易ローカルカウンターインクリメント（本番API接続時に拡張可能）
+        const countSpan = element.querySelector('.count-val');
+        let currentCount = parseInt(countSpan.textContent) || 0;
+        
+        if (element.classList.contains('active')) {
+            element.classList.remove('active');
+            currentCount = Math.max(0, currentCount - 1);
+        } else {
+            element.classList.add('active');
+            currentCount += 1;
+        }
+        countSpan.textContent = currentCount;
+
+        // 返信ボタンが押された場合は、投稿エリアへフォーカスを当てて簡易案内
+        if (type === 'reply') {
+            openModalBtn.click();
+            msgInput.value = `@${element.getAttribute('data-user')} `;
+            msgInput.dispatchEvent(new Event('input'));
+        }
+    };
+
+    // タイムライン描画のオーバーライドとX風UIの構築
+    window.loadTweets = async function() {
+        if (!timeline) return;
+        try {
+            const res = await fetch('/api/tweets');
+            const tweets = await res.json();
+            
+            timeline.innerHTML = tweets.map(t => {
+                const avatar = t.avatar_url || 'https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png';
+                return `
+                    <div class="tweet-item">
+                        <div class="tweet-avatar-col">
+                            <img class="tweet-avatar" src="${avatar}" alt="avatar">
+                        </div>
+                        <div class="tweet-body-col">
+                            <div class="tweet-info-header">
+                                <span class="tweet-display-name">${escapeHTML(t.display_name)}</span>
+                                <span class="tweet-username">@${escapeHTML(t.username)}</span>
+                            </div>
+                            <div class="tweet-text-content">${escapeHTML(t.message)}</div>
+                            
+                            <div class="tweet-actions-row">
+                                <button class="action-btn-wrapper btn-reply" data-user="${escapeHTML(t.username)}" onclick="handleReaction(${t.id}, 'reply', this); event.stopPropagation();">
+                                    <span class="material-icons">chat_bubble_outline</span>
+                                    <span class="count-val">${t.reply_count || 0}</span>
+                                </button>
+                                <button class="action-btn-wrapper btn-repost" onclick="handleReaction(${t.id}, 'repost', this); event.stopPropagation();">
+                                    <span class="material-icons">autorenew</span>
+                                    <span class="count-val">${t.repost_count || 0}</span>
+                                </button>
+                                <button class="action-btn-wrapper btn-like" onclick="handleReaction(${t.id}, 'like', this); event.stopPropagation();">
+                                    <span class="material-icons">favorite_border</span>
+                                    <span class="count-val">${t.like_count || 0}</span>
+                                </button>
+                                <button class="action-btn-wrapper btn-share" onclick="event.stopPropagation();">
+                                    <span class="material-icons">ios_share</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } catch (err) {
+            console.error("タイムラインの読み込みに失敗しました:", err);
+        }
+    };
+
+    // 初回読み込みのトリガー
+    window.loadTweets();
+
+    // 各環境（Windows/Android等）でのイベント発火タイミングを完全補正する文字数カウンター
+    if (msgInput && postBtn && charCount) {
+        const updateInputState = () => {
+            const len = msgInput.value.length;
+            charCount.textContent = `${len} / 140`;
+            postBtn.disabled = (len === 0 || len > 140);
+        };
+        msgInput.addEventListener("input", updateInputState);
+        msgInput.addEventListener("propertychange", updateInputState);
+    }
 
     if (openModalBtn && postModal) {
         openModalBtn.addEventListener("click", () => {
@@ -158,13 +397,48 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // Windows/Android等でのクロスプラットフォームセーフな投稿制御
     if (postBtn) {
-        postBtn.addEventListener("click", () => {
-            setTimeout(() => {
-                if (msgInput.value === "") {
+        postBtn.addEventListener("click", async (e) => {
+            e.preventDefault();
+            const message = msgInput.value.trim();
+            if (!message) return;
+
+            let user = {};
+            try {
+                user = JSON.parse(localStorage.getItem('user')) || {};
+            } catch(err) {
+                window.location.href = '/login';
+                return;
+            }
+
+            postBtn.disabled = true;
+
+            try {
+                const res = await fetch('/api/tweets', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        display_name: user.display_name || user.username,
+                        username: user.username,
+                        message: message,
+                        avatar_url: user.avatar_url || ''
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    msgInput.value = "";
+                    if (charCount) charCount.textContent = "0 / 140";
                     postModal.classList.remove("active");
+                    window.loadTweets();
+                } else {
+                    alert('投稿に失敗しました。');
+                    postBtn.disabled = false;
                 }
-            }, 100);
+            } catch(err) {
+                alert('通信エラーが発生しました。');
+                postBtn.disabled = false;
+            }
         });
     }
 });
