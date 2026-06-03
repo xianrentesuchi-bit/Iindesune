@@ -1,0 +1,269 @@
+:root {
+    --twitter-blue: #1d9bf0;
+    --twitter-blue-hover: #1a8cd8;
+    --border-color: #eff3f4;
+    --text-main: #0f1419;
+    --text-muted: #536471;
+    --bg-light: #ffffff;
+    --bg-hover: #f7f7f7;
+    --bg-input: #f1f3f4;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-light);
+    color: var(--text-main);
+    display: flex;
+    justify-content: center;
+}
+
+.container {
+    display: flex;
+    width: 100%;
+    max-width: 1200px;
+    min-height: 100vh;
+}
+
+/* --- 開閉サイドバーシステム --- */
+nav {
+    width: 240px;
+    padding: 15px;
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: width 0.3s ease, padding 0.3s ease;
+    overflow: hidden;
+    white-space: nowrap;
+    box-sizing: border-box;
+}
+
+/* 格納状態クラス (.collapsed) */
+nav.collapsed {
+    width: 68px;
+    padding: 15px 10px;
+}
+
+.menu-toggle-btn {
+    background: none;
+    border: none;
+    color: var(--text-main);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    margin-bottom: 10px;
+}
+
+.menu-toggle-btn:hover {
+    background-color: var(--bg-hover);
+}
+
+nav a {
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--text-main);
+    text-decoration: none;
+    padding: 12px;
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    transition: background-color 0.2s;
+}
+
+nav a:hover {
+    background-color: var(--bg-hover);
+}
+
+nav a .nav-text {
+    transition: opacity 0.2s ease;
+    opacity: 1;
+}
+
+nav.collapsed nav a {
+    justify-content: center;
+}
+
+nav.collapsed .nav-text {
+    display: none;
+    opacity: 0;
+}
+
+/* --- メインコンテンツ --- */
+main {
+    flex: 1;
+    max-width: 650px;
+    border-right: 1px solid var(--border-color);
+    min-height: 100vh;
+}
+
+.header-title {
+    font-size: 20px;
+    font-weight: 800;
+    padding: 15px;
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    z-index: 10;
+}
+
+/* --- 投稿フォーム --- */
+.post-box {
+    padding: 15px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    gap: 12px;
+}
+
+.post-box-right {
+    flex: 1;
+}
+
+textarea {
+    width: 100%;
+    border: none;
+    resize: none;
+    font-size: 18px;
+    outline: none;
+    color: var(--text-main);
+    background: transparent;
+    font-family: inherit;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 15px;
+    margin-top: 10px;
+    border-top: 1px solid var(--border-color);
+    padding-top: 10px;
+}
+
+.progress-container {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.tweet-btn {
+    background-color: var(--twitter-blue);
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 9999px;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.tweet-btn:hover {
+    background-color: var(--twitter-blue-hover);
+}
+
+.tweet-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+/* --- タイムライン --- */
+.tweet {
+    display: flex;
+    padding: 15px;
+    border-bottom: 1px solid var(--border-color);
+    gap: 12px;
+    transition: background 0.2s;
+}
+
+.tweet:hover {
+    background-color: rgba(0, 0, 0, 0.01);
+}
+
+.avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: #e1e8ed;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.tweet-content {
+    flex: 1;
+}
+
+.tweet-meta {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 4px;
+}
+
+.display-name {
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.username {
+    color: var(--text-muted);
+    font-size: 15px;
+}
+
+.tweet-text {
+    font-size: 15px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin: 0;
+}
+
+/* --- 認証・設定ボックス --- */
+.auth-box {
+    padding: 25px;
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    margin: 20px;
+    background: var(--bg-light);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.input-field {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    border: 1px solid #cfd9de;
+    font-size: 16px;
+    box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.input-field:focus {
+    border-color: var(--twitter-blue);
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* --- 通知カード --- */
+.notification-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.notification-icon {
+    color: var(--twitter-blue);
+}
