@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <title>ログイン / X-Board</title>
+    <%- include('partials/header') %>
+    <style>
+        /* ログイン画面全体のモダン化（ライトUIの維持） */
+        .auth-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f7f9fa;
+            padding: 16px;
+            box-sizing: border-box;
+        }
+
+        .auth-card {
+            background-color: #ffffff;
+            width: 100%;
+            max-width: 440px;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+            box-sizing: border-box;
+            border: 1px solid #eff3f4;
+        }
+
+        .auth-logo {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 24px;
+            color: var(--twitter-blue, #1d9bf0);
+        }
+
+        .auth-logo .material-icons {
+            font-size: 40px;
+        }
+
+        .auth-title {
+            font-size: 28px;
+            font-weight: 800;
+            color: #0f1419;
+            margin-top: 0;
+            margin-bottom: 28px;
+            letter-spacing: -0.5px;
+        }
+
+        /* 入力フィールドのスタイリング強化 */
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 16px;
+            border: 1px solid #cfd9de;
+            border-radius: 4px;
+            font-size: 16px;
+            color: #0f1419;
+            background-color: #ffffff;
+            box-sizing: border-box;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--twitter-blue, #1d9bf0);
+            box-shadow: 0 0 0 2px rgba(29, 155, 240, 0.2);
+        }
+
+        /* 実行・ボタン用ローディングアニメーション調整 */
+        .auth-btn {
+            width: 100%;
+            padding: 14px;
+            background-color: #0f1419;
+            color: #ffffff;
+            border: none;
+            border-radius: 9999px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .auth-btn:hover {
+            background-color: #272c30;
+        }
+
+        .auth-btn:disabled {
+            background-color: #86898c;
+            cursor: not-allowed;
+        }
+
+        .toggle-link {
+            text-align: center;
+            font-size: 14px;
+            color: var(--twitter-blue, #1d9bf0);
+            cursor: pointer;
+            margin-top: 24px;
+            font-weight: 500;
+            transition: text-decoration 0.2s ease;
+        }
+
+        .toggle-link:hover {
+            text-decoration: underline;
+        }
+
+        /* ローディング用スピンインジケータ */
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #ffffff;
+            animation: spin 0.8s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-logo">
+            <span class="material-icons">flutter_dash</span>
+        </div>
+        <h2 id="authTitle" class="auth-title">ログイン</h2>
+        
+        <div class="input-group">
+            <input type="text" id="authUser" class="input-field" placeholder="ユーザー名 (GAS)">
+            <input type="password" id="authPass" class="input-field" placeholder="パスワード">
+        </div>
+
+        <button id="authSubmit" class="auth-btn">
+            <div id="authSpinner" class="spinner"></div>
+            <span id="authBtnText">実行</span>
+        </button>
+
+        <p id="toggleAuth" class="toggle-link">新規登録はこちら</p>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    let isLoginMode = true;
+    const authTitle = document.getElementById('authTitle');
+    const toggleAuth = document.getElementById('toggleAuth');
+    const authSubmit = document.getElementById('authSubmit');
+    const authUser = document.getElementById('authUser');
+    const authPass = document.getElementById('authPass');
+    const authSpinner = document.getElementById('authSpinner');
+    const authBtnText = document.getElementById('authBtnText');
+
+    // ログイン・新規登録モード切り替え
+    if (toggleAuth) {
+        toggleAuth.addEventListener('click', () => {
+            isLoginMode = !isLoginMode;
+            authTitle.innerText = isLoginMode ? 'ログイン' : 'アカウント新規登録';
+            toggleAuth.innerText = isLoginMode ? '新規登録はこちら' : 'ログインはこちら';
+            authUser.value = '';
+            authPass.value = '';
+        });
+    }
+
+    // GAS API連携付き認証処理
+    if (authSubmit) {
+        authSubmit.addEventListener('click', async () => {
+            const username = authUser.value.trim();
+            const password = authPass.value.trim();
+            const endpoint = isLoginMode ? '/api/auth/login' : '/api/auth/register';
+
+            if (!username || !password) {
+                alert('ユーザー名とパスワードを入力してください。');
+                return;
+            }
+
+            // ローディング状態（中表示）のアクティブ化
+            authSubmit.disabled = true;
+            authSpinner.style.display = 'block';
+            authBtnText.innerText = isLoginMode ? 'ログイン中...' : '新規登録中...';
+            authUser.disabled = true;
+            authPass.disabled = true;
+
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    // Sessionデータオブジェクトの構築と保存
+                    const userSession = {
+                        username: data.username,
+                        userId: data.userId,
+                        display_name: data.username,
+                        avatar_url: 'https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png'
+                    };
+                    localStorage.setItem('user', JSON.stringify(userSession));
+                    // 認証成功後はホーム画面へ遷移
+                    window.location.href = '/';
+                } else {
+                    alert(data.message || '認証に失敗しました。');
+                    resetLoadingState();
+                }
+            } catch (e) {
+                alert('サーバーまたはGAS認証通信に失敗しました。');
+                resetLoadingState();
+            }
+        });
+    }
+
+    function resetLoadingState() {
+        authSubmit.disabled = false;
+        authSpinner.style.display = 'none';
+        authBtnText.innerText = '実行';
+        authUser.disabled = false;
+        authPass.disabled = false;
+    }
+});
+</script>
+</body>
+</html>
