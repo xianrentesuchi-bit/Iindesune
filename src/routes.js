@@ -1,6 +1,6 @@
 import express from 'express';
 import { db } from './db.js';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import csurf from 'csurf';
 
 const router = express.Router();
