@@ -1,7 +1,7 @@
 import crypto from "crypto";
 
 const requestLogs = new Map();
-const verifiedIPs = new Set();
+const verifiedIPs = new Map();
 const blockedIPs = new Set();
 
 function getClientIP(req) {
@@ -56,8 +56,16 @@ function accessGateMiddleware(req, res, next) {
     return next();
   }
 
-  if (!verifiedIPs.has(ip)) {
-    return res.redirect("/botcheck");
+  if (path === "/" || path === "/api/auth/login") {
+    const now = Date.now();
+    const verifiedTime = verifiedIPs.get(ip);
+
+    if (!verifiedTime || now - verifiedTime > 3 * 60 * 60 * 1000) {
+      if (path.startsWith("/api/")) {
+        return res.status(403).json({ error: "JS verification failed" });
+      }
+      return res.redirect("/botcheck");
+    }
   }
 
   next();
@@ -65,7 +73,7 @@ function accessGateMiddleware(req, res, next) {
 
 function handleVerifyJS(req, res) {
   const ip = getClientIP(req);
-  verifiedIPs.add(ip);
+  verifiedIPs.set(ip, Date.now());
   res.json({ ok: true });
 }
 
