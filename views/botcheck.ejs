@@ -173,7 +173,8 @@ body {
 
 <script>
 async function verifyJS(){
-  await fetch("/api/bot/verify-js", { method: "POST" });
+  const res = await fetch("/api/bot/verify-js", { method: "POST" });
+  return await res.json();
 }
 
 function fingerprint(){
@@ -216,7 +217,12 @@ async function startVerification() {
   }
 
   try {
-    await verifyJS();
+    const verifyResult = await verifyJS();
+    if (!verifyResult || !verifyResult.ok) {
+      showError();
+      return;
+    }
+
     await sendFingerprint();
     await getToken();
 
@@ -227,7 +233,7 @@ async function startVerification() {
     document.getElementById("status").textContent = "確認が完了しました";
     
     setTimeout(() => {
-      window.location.href = "/";
+      window.location.replace("/");
     }, 500);
 
   } catch (e) {
@@ -240,6 +246,12 @@ function showError() {
   document.getElementById("errorIcon").style.display = "block";
   document.getElementById("status").textContent = "認証に失敗しました";
   document.getElementById("challengeBox").classList.add("shake");
+  
+  setTimeout(() => {
+    document.getElementById("errorIcon").style.display = "none";
+    document.getElementById("verifyTrigger").style.display = "flex";
+    document.getElementById("status").textContent = "私はボットではありません";
+  }, 2000);
 }
 </script>
 
