@@ -65,6 +65,7 @@ function accessGateMiddleware(req, res, next) {
   const ip = getClientIP(req);
   const path = req.path;
 
+  // ボットチェック自体、ボット用API、静的ファイル（拡張子あり）は常に許可
   if (
     path === "/botcheck" ||
     path.startsWith("/api/bot") ||
@@ -75,30 +76,23 @@ function accessGateMiddleware(req, res, next) {
     return next();
   }
 
-  if (path === "/" || path === "/api/auth/login") {
-    const verifiedTime = verifiedIPs.get(ip);
+  // 認証が必要なルート（すべての画面遷移および認証が必要なAPI）
+  const verifiedTime = verifiedIPs.get(ip);
+  const now = Date.now();
 
-    if (!verifiedTime) {
-      if (path.startsWith("/api/")) {
-        return res.status(403).json({
-          error: "JS verification failed"
-        });
-      }
-
-      return res.redirect("/botcheck");
+  // 認証データがない、または3時間を経過している場合はチェックへ強制移動
+  if (!verifiedTime || (now - verifiedTime > 3 * 60 * 60 * 1000)) {
+    if (verifiedTime) {
+      verifiedIPs.delete(ip); // 期限切れの削除
     }
 
-    if (Date.now() - verifiedTime > 3 * 60 * 60 * 1000) {
-      verifiedIPs.delete(ip);
-
-      if (path.startsWith("/api/")) {
-        return res.status(403).json({
-          error: "JS verification failed"
-        });
-      }
-
-      return res.redirect("/botcheck");
+    if (path.startsWith("/api/")) {
+      return res.status(403).json({
+        error: "JS verification failed"
+      });
     }
+
+    return res.redirect("/botcheck");
   }
 
   next();
