@@ -153,9 +153,9 @@ body {
       <p>掲示板へアクセスする前に確認が必要です。</p>
     </div>
 
-    <div id="challengeBox" class="challenge-box">
+    <div id="challengeBox" class="challenge-box" onclick="startVerification()" style="cursor: pointer;">
       <div class="challenge-left">
-        <button id="verifyTrigger" class="verify-trigger" onclick="startVerification()">
+        <button id="verifyTrigger" class="verify-trigger" style="pointer-events: none;">
           <span id="triggerIcon" class="material-icons" style="font-size: 20px;"></span>
         </button>
         <div id="loader" class="loader"></div>
@@ -202,31 +202,35 @@ async function getToken(){
 }
 
 async function startVerification() {
+  // 多重クリック防止
+  const trigger = document.getElementById("verifyTrigger");
+  if (trigger.style.display === "none") return;
+
   const challengeBox = document.getElementById("challengeBox");
   challengeBox.classList.remove("shake");
 
-  document.getElementById("verifyTrigger").style.display = "none";
+  trigger.style.display = "none";
   document.getElementById("loader").style.display = "block";
   document.getElementById("status").textContent = "検証しています...";
 
   const honeypot = document.getElementById("honeypot").value;
   if (honeypot !== "") {
     await new Promise(resolve => setTimeout(resolve, 1000));
-    showError();
+    showError("ハニーポットが検出されました");
     return;
   }
 
   try {
     const verifyResult = await verifyJS();
     if (!verifyResult || !verifyResult.ok) {
-      showError();
+      showError("JS検証に失敗しました");
       return;
     }
 
     await sendFingerprint();
     await getToken();
 
-    await new Promise(resolve => setTimeout(resolve, 2500));
+    await new Promise(resolve => setTimeout(resolve, 1500));
 
     document.getElementById("loader").style.display = "none";
     document.getElementById("checkIcon").style.display = "block";
@@ -237,14 +241,15 @@ async function startVerification() {
     }, 500);
 
   } catch (e) {
-    showError();
+    console.error("Verification error:", e);
+    showError("通信エラーが発生しました");
   }
 }
 
-function showError() {
+function showError(msg) {
   document.getElementById("loader").style.display = "none";
   document.getElementById("errorIcon").style.display = "block";
-  document.getElementById("status").textContent = "認証に失敗しました";
+  document.getElementById("status").textContent = msg || "認証に失敗しました";
   document.getElementById("challengeBox").classList.add("shake");
   
   setTimeout(() => {
