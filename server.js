@@ -46,9 +46,10 @@ app.use(cookieParser());
 app.use(express.static("public"));
 
 app.use(securityHeaders);
-app.use(blockCheckMiddleware);
-app.use(rateLimitMiddleware);
-app.use(accessGateMiddleware);
+// ボットチェック用のミドルウェアを無効化
+// app.use(blockCheckMiddleware);
+// app.use(rateLimitMiddleware);
+// app.use(accessGateMiddleware);
 app.use(requireLoginMiddleware);
 
 app.get("/botcheck", (req, res) => res.render("botcheck"));
